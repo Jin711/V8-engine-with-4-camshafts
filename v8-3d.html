@@ -1,0 +1,2211 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#070809"><meta name="description" content="A transparent 5.73 litre crossplane V8 engine: orbit the glass block, watch the four-stroke gas cycle, and drive it from the tachometer and accelerator pedal."><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23070809'/%3E%3Cpath d='M12 16h8l12 28 12-28h8L36 52h-8z' fill='%23e9e6df'/%3E%3C/svg%3E"><title>V8 — x-ray engine</title><style>
+*{box-sizing:border-box}
+:root{
+  --bg:#070809;--panel:#0b0d0e;--panel2:#111416;--line:#22272a;--line2:#30363a;
+  --ink:#e9e6df;--muted:#9a9d9b;--dim:#7c817f;--amber:#f0a43c;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  --sans:"Avenir Next",Avenir,"Segoe UI","Helvetica Neue",Arial,sans-serif;
+  --mono:"SF Mono","Cascadia Mono","Roboto Mono",ui-monospace,Menlo,monospace;
+}
+html,body{margin:0;background:var(--bg);color:var(--muted);font:14px/1.6 var(--sans)}
+body{
+  -webkit-font-smoothing:antialiased;
+  background:
+    radial-gradient(900px 520px at 18% -8%,rgba(240,164,60,.05),transparent 65%),
+    linear-gradient(rgba(255,255,255,.015) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.015) 1px,transparent 1px),
+    var(--bg);
+  background-size:auto,96px 96px,96px 96px,auto;
+}
+::selection{background:rgba(240,164,60,.25);color:var(--ink)}
+a{color:inherit}
+button,a,[tabindex]{-webkit-tap-highlight-color:transparent}
+button:focus-visible,a:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.v8x{max-width:1220px;margin:0 auto;padding:44px 32px 56px}
+.v8x-head{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:48px;align-items:end;margin:0 0 26px}
+.v8x-intro{min-width:0}
+.v8x-intro h1{display:flex;align-items:baseline;margin:0;font:400 76px/.9 var(--serif);letter-spacing:-.035em;color:var(--ink)}
+.v8x-title-sub{margin-left:18px;padding-left:16px;border-left:1px solid var(--line2);font:400 13px/1.3 var(--sans);letter-spacing:.015em;color:var(--muted)}
+.v8x-sub{max-width:60ch;margin:14px 0 0;font-size:14px;line-height:1.65;color:var(--muted)}
+.v8x-spec{display:grid;grid-template-columns:1fr 1fr;gap:14px 22px;margin:0;padding:0 0 2px 22px;border-left:1px solid var(--line)}
+.v8x-spec div{min-width:0}
+.v8x-spec dt{margin:0 0 3px;font:10.5px/1.2 var(--sans);color:var(--dim)}
+.v8x-spec dd{margin:0;font:12px/1.35 var(--mono);color:var(--ink);letter-spacing:.005em;white-space:nowrap}
+.v8x-rig{position:relative;border:1px solid var(--line);border-radius:3px;overflow:hidden;background:var(--panel);box-shadow:0 34px 90px -56px #000}
+#stage{position:relative;width:100%;aspect-ratio:16/9.6;min-height:320px;max-height:calc(100vh - 364px);overflow:hidden;background:#080a0b;cursor:grab}
+#stage.dragging{cursor:grabbing}
+#stage canvas{display:block;width:100%;height:100%;touch-action:none}
+
+.v8x-dash{position:absolute;top:14px;left:14px;width:150px;height:150px;z-index:4;pointer-events:none;filter:drop-shadow(0 14px 24px rgba(0,0,0,.6))}
+.v8x-dash svg{display:block;width:100%;height:100%}
+.v8x-dash .v8x-dash-value{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);display:flex;align-items:baseline;gap:4px;padding:3px 8px 2px;border:1px solid #2a3034;border-radius:3px;background:rgba(7,8,8,.86);font:500 14px/1 var(--mono);color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+.v8x-dash .v8x-dash-value small{font-size:8px;font-weight:400;letter-spacing:.1em;color:#8b908e}
+.v8x-dash .v8x-dash-unit{position:absolute;left:0;right:0;bottom:5px;text-align:center;font:8px/1 var(--sans);letter-spacing:.13em;color:#7f8481}
+
+.v8x-corners{position:absolute;inset:14px 16px;pointer-events:none;z-index:2}
+.v8x-corner{position:absolute;font:11px/1.4 var(--sans);letter-spacing:.005em;color:var(--muted);white-space:nowrap;text-shadow:0 1px 8px #000}
+.v8x-corner.hint{bottom:0;left:0}
+.v8x-corner.readout{right:0;bottom:0;color:#cfcbc2;font:10.5px/1.4 var(--mono);letter-spacing:0;font-variant-numeric:tabular-nums}
+
+.v8x-pedal{display:flex;align-items:center;gap:12px;flex:0 0 auto;min-width:210px;height:96px;padding:6px 14px 6px 6px;border:1px solid #2a3033;border-radius:4px;background:#0d1011;cursor:pointer;touch-action:none;user-select:none;transition:border-color .16s,background .16s}
+.v8x-pedal:hover{border-color:#3a4246;background:#121617}
+.v8x-pedal:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.v8x-pedal svg{width:84px;height:80px;display:block}
+.v8x-pedal .v8x-pedal-copy{display:flex;flex-direction:column;gap:6px;font:12px/1 var(--sans);letter-spacing:.02em;color:var(--muted)}
+.v8x-pedal .v8x-pedal-copy b{font:500 18px/1 var(--mono);letter-spacing:0;color:var(--ink);font-variant-numeric:tabular-nums}
+.v8x-pedal.pressed{border-color:#4a3a25;background:#15120e}
+.v8x-pedal.pressed .v8x-pedal-copy b{color:var(--amber)}
+.v8x-pedal-hint{max-width:260px;font:11px/1.45 var(--sans);color:var(--muted)}
+
+.v8x-console{display:flex;align-items:center;gap:9px;padding:10px 12px;border-top:1px solid var(--line);background:var(--panel2)}
+.v8x-play{appearance:none;display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 12px;border:1px solid var(--ink);border-radius:3px;background:var(--ink);color:#0b0c0c;font:500 12px/1 var(--sans);letter-spacing:.005em;cursor:pointer;transition:background .16s,border-color .16s}
+.v8x-play:hover{background:#f6f2e9;border-color:#f6f2e9}
+.v8x-play-icon{width:13px;height:13px;display:block;fill:currentColor}
+.v8x-play[data-playing="true"] .v8x-icon-run{display:none}
+.v8x-play[data-playing="false"] .v8x-icon-pause{display:none}
+.v8x-sound{appearance:none;display:grid;place-items:center;width:32px;height:32px;padding:0;border:1px solid var(--line2);border-radius:3px;background:#0d1011;color:var(--muted);cursor:pointer;transition:color .16s,border-color .16s,background .16s}
+.v8x-sound:hover{color:var(--ink);border-color:#3a4246;background:#121617}
+.v8x-sound[aria-pressed="true"]{color:var(--amber);border-color:#4a3a25}
+.v8x-sound[aria-pressed="false"]{color:var(--dim)}
+.v8x-sound svg{width:18px;height:18px;display:block}
+.v8x-sound .v8x-mute{display:none}
+.v8x-sound[aria-pressed="false"] .v8x-mute{display:block}
+.v8x-sound[aria-pressed="false"] .v8x-wave{opacity:.2}
+.v8x-chips{display:flex;align-items:center;gap:5px;margin-left:auto;flex-wrap:wrap}
+.v8x-chip{position:relative;width:26px;height:26px;border-radius:50%;border:1px solid #2a3033;display:grid;place-items:center;font:10px/1 var(--mono);color:#c6cac8;background:#0d1011;transition:box-shadow .2s,border-color .2s}
+.v8x-chip::before{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--gas,#223);opacity:var(--gasA,.3);filter:saturate(1.15)}
+.v8x-chip span{position:relative;z-index:1;text-shadow:0 1px 2px #000}
+.v8x-chip.fire{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink),0 0 12px -2px var(--ink)}
+
+.v8x-key{display:grid;gap:7px;margin:18px 2px 0;padding-top:12px;border-top:1px solid var(--line)}
+.v8x-key-row{position:relative;display:flex;align-items:center;flex-wrap:wrap;gap:7px 18px;min-height:14px;padding-left:68px;font-size:12px;color:var(--muted)}
+.v8x-key-row h2{position:absolute;left:0;top:0;width:52px;margin:0;font:500 11px/1.3 var(--sans);color:var(--dim)}
+.v8x-keyitem{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.v8x-lamp{width:8px;height:8px;border-radius:50%;background:var(--gas);box-shadow:0 0 9px -1px var(--gas)}
+.v8x-swatch{width:13px;height:3px;border-radius:1px;background:var(--part)}
+
+.v8x-notes{display:grid;grid-template-columns:1fr 1fr;gap:34px;margin:30px 2px 0}
+.v8x-notes h2{margin:0 0 8px;font:400 21px/1.2 var(--serif);letter-spacing:-.01em;color:var(--ink)}
+.v8x-notes p{max-width:57ch;margin:0;font-size:13.5px;line-height:1.72;color:var(--muted)}
+
+.v8x-footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px 30px;margin:34px 2px 0;padding-top:14px;border-top:1px solid var(--line);font-size:11.5px;line-height:1.6;color:var(--dim)}
+.v8x-footer p{margin:0}
+.v8x-credit a{color:var(--muted);text-decoration:underline;text-decoration-color:var(--line2);text-underline-offset:3px}
+.v8x-credit a:hover{color:var(--ink)}
+.v8x-links{display:flex;flex-wrap:wrap;gap:6px 18px;justify-content:flex-end}
+.v8x-links a{color:var(--muted);text-decoration:none;border-bottom:1px solid var(--line2);padding-bottom:1px}
+.v8x-links a:hover{color:var(--ink);border-color:var(--amber)}
+
+@media(max-width:960px){
+  .v8x{padding:34px 22px 44px}
+  .v8x-head{grid-template-columns:1fr;gap:22px;align-items:start;margin-bottom:22px}
+  .v8x-intro h1{font-size:64px}
+  .v8x-spec{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 18px;padding:14px 0 0;border-left:0;border-top:1px solid var(--line)}
+  .v8x-spec dd{white-space:normal}
+  .v8x-corner.hint{display:none}
+}
+@media(max-width:720px){
+  .v8x{padding:24px 14px 36px}
+  .v8x-intro h1{font-size:52px}
+  .v8x-title-sub{margin-left:12px;padding-left:11px;font-size:12px}
+  .v8x-sub{margin-top:11px;font-size:13px}
+  .v8x-head{margin-bottom:20px}
+  .v8x-spec{grid-template-columns:1fr 1fr;gap:10px 16px}
+  #stage{aspect-ratio:4/3.5;max-height:none;min-height:0}
+  .v8x-dash{width:112px;height:112px;top:8px;left:8px}
+  .v8x-dash .v8x-dash-value{bottom:13px;font-size:12px;padding:2px 6px}
+  .v8x-dash .v8x-dash-unit{bottom:4px;font-size:7.5px}
+  .v8x-corners{inset:8px 10px}
+  .v8x-corner.readout{font-size:9.5px}
+  .v8x-pedal{min-width:170px;height:84px;padding:4px 10px 4px 4px;gap:9px}
+  .v8x-pedal svg{width:70px;height:66px}
+  .v8x-pedal .v8x-pedal-copy{font-size:10px;gap:4px}
+  .v8x-pedal .v8x-pedal-copy b{font-size:14px}
+  .v8x-pedal-hint{flex:1 1 100%;max-width:none;font-size:10.5px}
+  .v8x-console{flex-wrap:wrap;padding:9px 10px;gap:8px}
+  .v8x-chips{width:100%;margin-left:0;justify-content:flex-start}
+  .v8x-chip{width:24px;height:24px}
+  .v8x-key-row{padding-left:56px;gap:6px 14px;font-size:11.5px}
+  .v8x-key-row h2{width:44px;font-size:10.5px}
+  .v8x-notes{grid-template-columns:1fr;gap:22px;margin-top:24px}
+  .v8x-notes h2{font-size:20px}
+  .v8x-footer{flex-direction:column;gap:10px;margin-top:26px}
+  .v8x-links{justify-content:flex-start}
+}
+@media(prefers-reduced-motion:reduce){
+  .v8x-chip,.v8x-play,.v8x-sound{transition:none}
+}
+</style></head>
+<body><main class="v8x">
+  <header class="v8x-head">
+    <div class="v8x-intro">
+      <h1>V8 <span class="v8x-title-sub">x-ray engine</span></h1>
+      <p class="v8x-sub">A 5.73 litre, 90° crossplane V8, drawn as glass. Cold intake air turns yellow under compression, ignites red, cools to orange through the power stroke and leaves through the exhaust. The live cards follow cylinder 1's stroke and spray.</p>
+    </div>
+    <dl class="v8x-spec">
+      <div><dt>Displacement</dt><dd>5.73 L</dd></div>
+      <div><dt>Layout</dt><dd>90° V8</dd></div>
+      <div><dt>Crank</dt><dd>Crossplane</dd></div>
+      <div><dt>Firing order</dt><dd>1–8–4–3–6–5–7–2</dd></div>
+    </dl>
+  </header>
+  <section class="v8x-rig">
+    <div id="stage"><canvas id="view" role="img" aria-label="Cutaway 3D V8 engine with a glass block and heads, moving pistons, valves, cams and timing chains. Drag to orbit, scroll to zoom, double-click to reset. A tachometer at top left and an accelerator control in the console below control engine speed."></canvas>
+      <div class="v8x-dash" id="dash" aria-label="Engine speed">
+        <svg viewBox="0 0 160 160" aria-hidden="true">
+          <circle cx="80" cy="80" r="77" fill="rgba(9,10,10,.92)" stroke="#2b3033" stroke-width="2"/>
+          <circle cx="80" cy="80" r="70" fill="none" stroke="#191d1e" stroke-width="1"/>
+          <line x1="24.57" y1="112.00" x2="34.10" y2="106.50" stroke="#d8d4cb" stroke-width="2"/><line x1="24.37" y1="102.48" x2="27.15" y2="101.35" stroke="#626864" stroke-width="1"/><line x1="21.78" y1="94.52" x2="24.69" y2="93.79" stroke="#626864" stroke-width="1"/><line x1="20.33" y1="86.27" x2="23.31" y2="85.96" stroke="#626864" stroke-width="1"/><line x1="20.04" y1="77.91" x2="23.03" y2="78.01" stroke="#626864" stroke-width="1"/><line x1="16.97" y1="68.89" x2="27.81" y2="70.80" stroke="#d8d4cb" stroke-width="2"/><line x1="22.94" y1="61.46" x2="25.79" y2="62.39" stroke="#626864" stroke-width="1"/><line x1="26.07" y1="53.70" x2="28.77" y2="55.01" stroke="#626864" stroke-width="1"/><line x1="30.26" y1="46.45" x2="32.74" y2="48.13" stroke="#626864" stroke-width="1"/><line x1="35.41" y1="39.85" x2="37.64" y2="41.86" stroke="#626864" stroke-width="1"/><line x1="38.86" y1="30.97" x2="45.93" y2="39.40" stroke="#d8d4cb" stroke-width="2"/><line x1="48.20" y1="29.12" x2="49.79" y2="31.66" stroke="#626864" stroke-width="1"/><line x1="55.60" y1="25.19" x2="56.82" y2="27.93" stroke="#626864" stroke-width="1"/><line x1="63.46" y1="22.32" x2="64.29" y2="25.21" stroke="#626864" stroke-width="1"/><line x1="71.65" y1="20.58" x2="72.07" y2="23.55" stroke="#626864" stroke-width="1"/><line x1="80.00" y1="16.00" x2="80.00" y2="27.00" stroke="#d8d4cb" stroke-width="2"/><line x1="88.35" y1="20.58" x2="87.93" y2="23.55" stroke="#626864" stroke-width="1"/><line x1="96.54" y1="22.32" x2="95.71" y2="25.21" stroke="#626864" stroke-width="1"/><line x1="104.40" y1="25.19" x2="103.18" y2="27.93" stroke="#626864" stroke-width="1"/><line x1="111.80" y1="29.12" x2="110.21" y2="31.66" stroke="#626864" stroke-width="1"/><line x1="121.14" y1="30.97" x2="114.07" y2="39.40" stroke="#d8d4cb" stroke-width="2"/><line x1="124.59" y1="39.85" x2="122.36" y2="41.86" stroke="#626864" stroke-width="1"/><line x1="129.74" y1="46.45" x2="127.26" y2="48.13" stroke="#626864" stroke-width="1"/><line x1="133.93" y1="53.70" x2="131.23" y2="55.01" stroke="#626864" stroke-width="1"/><line x1="137.06" y1="61.46" x2="134.21" y2="62.39" stroke="#626864" stroke-width="1"/><line x1="143.03" y1="68.89" x2="132.19" y2="70.80" stroke="#d8d4cb" stroke-width="2"/><line x1="139.96" y1="77.91" x2="136.97" y2="78.01" stroke="#626864" stroke-width="1"/><line x1="139.67" y1="86.27" x2="136.69" y2="85.96" stroke="#626864" stroke-width="1"/><line x1="138.22" y1="94.52" x2="135.31" y2="93.79" stroke="#626864" stroke-width="1"/><line x1="135.63" y1="102.48" x2="132.85" y2="101.35" stroke="#626864" stroke-width="1"/><line x1="135.43" y1="112.00" x2="125.90" y2="106.50" stroke="#d8d4cb" stroke-width="2"/>
+          <text x="42.76" y="105.00" text-anchor="middle" fill="#cbc7bf" font-family="ui-monospace,Menlo,monospace" font-size="10" font-weight="600">0</text><text x="37.65" y="76.03" text-anchor="middle" fill="#cbc7bf" font-family="ui-monospace,Menlo,monospace" font-size="10" font-weight="600">1</text><text x="52.36" y="50.56" text-anchor="middle" fill="#cbc7bf" font-family="ui-monospace,Menlo,monospace" font-size="10" font-weight="600">2</text><text x="80.00" y="40.50" text-anchor="middle" fill="#cbc7bf" font-family="ui-monospace,Menlo,monospace" font-size="10" font-weight="600">3</text><text x="107.64" y="50.56" text-anchor="middle" fill="#cbc7bf" font-family="ui-monospace,Menlo,monospace" font-size="10" font-weight="600">4</text><text x="122.35" y="76.03" text-anchor="middle" fill="#cbc7bf" font-family="ui-monospace,Menlo,monospace" font-size="10" font-weight="600">5</text><text x="117.24" y="105.00" text-anchor="middle" fill="#cbc7bf" font-family="ui-monospace,Menlo,monospace" font-size="10" font-weight="600">6</text>
+          <path d="M 138.10 90.25 A 59 59 0 0 1 131.10 109.50" fill="none" stroke="#ff5b3a" stroke-width="4" opacity=".85" stroke-linecap="round"/>
+          <text x="80" y="103" text-anchor="middle" fill="#8a8f8c" font-family="ui-monospace,Menlo,monospace" font-size="8" letter-spacing="2">RPM</text>
+          <g id="dashNeedle" transform="rotate(-116 80 80)">
+            <line x1="80" y1="83" x2="80" y2="27" stroke="#f0a43c" stroke-width="2.4" stroke-linecap="round"/>
+            <line x1="80" y1="34" x2="80" y2="27" stroke="#ff5b3a" stroke-width="2.4" stroke-linecap="round"/>
+          </g>
+          <circle cx="80" cy="80" r="5.2" fill="#e7e3da"/>
+          <circle cx="80" cy="80" r="2.2" fill="#0b0d0e"/>
+        </svg>
+        <div class="v8x-dash-value"><span id="dashRpm">10</span><small>rpm</small></div>
+        <div class="v8x-dash-unit">×100</div>
+      </div>
+      <div class="v8x-corners">
+        <span class="v8x-corner hint">Drag to orbit. Scroll to zoom. Double-click to reset.</span>
+        <span class="v8x-corner readout" data-readout>crank 0° / 10 rpm / #1 firing</span>
+      </div>
+    </div>
+    <div class="v8x-console">
+      <button class="v8x-play" id="play" data-playing="true" aria-label="Pause animation">
+        <svg class="v8x-play-icon" viewBox="0 0 16 16" aria-hidden="true">
+          <path class="v8x-icon-pause" d="M4 3h2.8v10H4zM9.2 3H12v10H9.2z"/>
+          <path class="v8x-icon-run" d="M4.6 3.1 12.6 8l-8 4.9z"/>
+        </svg>
+        <span id="playLabel">Pause</span>
+      </button>
+      <button class="v8x-sound" id="sound" aria-pressed="true" aria-label="Engine sound" title="Engine sound">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M3.8 9.1h3.4L11.6 6v12l-4.4-3.1H3.8z" fill="currentColor"/>
+          <path class="v8x-wave" d="M14.8 8.5a4.9 4.9 0 0 1 0 7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <path class="v8x-wave" d="M17.4 6.1a8.3 8.3 0 0 1 0 11.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <path class="v8x-mute" d="M4.5 4.5 19.5 19.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <div class="v8x-pedal" id="pedal" role="slider" tabindex="0" aria-label="Accelerator pedal" aria-orientation="vertical" aria-valuemin="0" aria-valuemax="70" aria-valuenow="70" aria-valuetext="70 degrees, 10 rpm">
+        <svg viewBox="0 0 68 64" aria-hidden="true">
+          <line x1="2" y1="3" x2="25" y2="3" stroke="#2a2f30" stroke-width="1.4"/>
+          <path d="M4 3h17v13H4z" fill="#151a1b" stroke="#4a5254" stroke-width="1"/>
+          <g id="pedalBlade" transform="rotate(-70 9 16)">
+            <path d="M9 16C15 15 20 16 22 19L25 51C26 57 23 61 18 61L13 61C8 61 6 57 7 52L9 16Z" fill="#a6a49c" stroke="#ddd8cd" stroke-width="1" stroke-linejoin="round"/>
+            <path d="M10 32C14 31 19 32 23 34M9 38C14 37 19 38 24 40M9 44C14 43 19 44 24 46M9 50C14 49 19 50 24 52M10 56C14 55 19 56 23 57" fill="none" stroke="#6b6f6c" stroke-width="1.2" stroke-linecap="round"/>
+            <path d="M11 20C13 27 13 38 12 51" fill="none" stroke="#ddd8cd" stroke-width=".7" opacity=".55"/>
+          </g>
+        </svg>
+        <div class="v8x-pedal-copy"><span>Accelerator</span><b data-pedal-angle>70°</b></div>
+      </div>
+      <span class="v8x-pedal-hint">Drag the accelerator down to rev the engine.</span>
+      <div class="v8x-chips" role="img" aria-label="Cylinder firing lamps, cylinders 1 to 8">
+        <span class="v8x-chip" data-chip="1" aria-hidden="true"><span>1</span></span><span class="v8x-chip" data-chip="2" aria-hidden="true"><span>2</span></span><span class="v8x-chip" data-chip="3" aria-hidden="true"><span>3</span></span><span class="v8x-chip" data-chip="4" aria-hidden="true"><span>4</span></span><span class="v8x-chip" data-chip="5" aria-hidden="true"><span>5</span></span><span class="v8x-chip" data-chip="6" aria-hidden="true"><span>6</span></span><span class="v8x-chip" data-chip="7" aria-hidden="true"><span>7</span></span><span class="v8x-chip" data-chip="8" aria-hidden="true"><span>8</span></span>
+      </div>
+    </div>
+  </section>
+  <section class="v8x-key" aria-label="Colour key">
+    <div class="v8x-key-row">
+      <h2>Charge</h2>
+      <span class="v8x-keyitem"><i class="v8x-lamp" style="--gas:#3aa0ff"></i>cold intake</span>
+      <span class="v8x-keyitem"><i class="v8x-lamp" style="--gas:#ffd040"></i>compressed</span>
+      <span class="v8x-keyitem"><i class="v8x-lamp" style="--gas:#ff3826"></i>ignition</span>
+      <span class="v8x-keyitem"><i class="v8x-lamp" style="--gas:#ff8a2c"></i>power / exhaust</span>
+    </div>
+    <div class="v8x-key-row">
+      <h2>Parts</h2>
+      <span class="v8x-keyitem"><i class="v8x-swatch" style="--part:#6f9fd2"></i>block</span>
+      <span class="v8x-keyitem"><i class="v8x-swatch" style="--part:#66a99c"></i>heads</span>
+      <span class="v8x-keyitem"><i class="v8x-swatch" style="--part:#5ab4d8"></i>intake</span>
+      <span class="v8x-keyitem"><i class="v8x-swatch" style="--part:#d08a4c"></i>exhaust</span>
+      <span class="v8x-keyitem"><i class="v8x-swatch" style="--part:#c29a62"></i>crank</span>
+      <span class="v8x-keyitem"><i class="v8x-swatch" style="--part:#94b4d2"></i>rods</span>
+      <span class="v8x-keyitem"><i class="v8x-swatch" style="--part:#d8b862"></i>cams</span>
+      <span class="v8x-keyitem"><i class="v8x-swatch" style="--part:#c8cee0"></i>timing chains</span>
+      <span class="v8x-keyitem"><i class="v8x-swatch" style="--part:#b9c2d0"></i>power output</span>
+      <span class="v8x-keyitem"><i class="v8x-swatch" style="--part:#ffc45a"></i>petrol injection</span>
+      <span class="v8x-keyitem"><i class="v8x-swatch" style="--part:#e8e2d0"></i>spark plugs</span>
+      <span class="v8x-keyitem"><i class="v8x-swatch" style="--part:#d6e4f2"></i>cylinder outline</span>
+    </div>
+  </section>
+  <div class="v8x-notes">
+    <section>
+      <h2>Inside the glass</h2>
+      <p>The block, heads and covers are drawn as glass; the crank, rods, pistons and valves stay solid so they read inside. Blue intake charge turns yellow as the piston compresses it, ignites red at the plug, cools to orange through the power stroke and leaves through the exhaust. The amber mist is port injection. The front chains run the four cams at 2:1, and the flywheel and ring gear sit at the rear of the crank.</p>
+    </section>
+    <section>
+      <h2>Driving the model</h2>
+      <p>The tachometer is fixed at the top left of the view; its needle and digital readout follow engine speed from 10 rpm at idle to the 600 rpm design maximum. The one-piece accelerator in the control row below the view is drawn from its left side, hinged at its top left: released to 70° it holds idle, and dragging it down opens the throttle fully. Let go and it springs back. Sound starts on your first pointer or key press, then rises in pitch and volume with rpm.</p>
+    </section>
+  </div>
+  <footer class="v8x-footer">
+    <p class="v8x-credit">Engine audio: <a href="https://commons.wikimedia.org/wiki/File:Rover-v8-rr79.ogg">3.5 L Rover V8</a>, Collard, public domain; pitched and mixed live with rpm.</p>
+    <p class="v8x-links"><a href="v8-engine-light.html">Sectioned cutaway</a><a href="v8-engine-detailed-a4.pdf">Detailed A4</a><a href="v8-engine-poster-a4.pdf">Poster A4</a></p>
+  </footer>
+</main>
+<script type="module">
+// The V8, as numbers. Units: mm, degrees. z is up, the crank runs along x,
+// the camera sits toward +x/+y, so the sectioned front face looks at us.
+// Small-block proportions: 101.6 mm bore, 88.4 mm stroke, 144.8 mm rods,
+// 111.8 mm bore pitch, 90 degree V, crossplane crank, firing order
+// 1-8-4-3-6-5-7-2. OHC heads, two valves per cylinder, bucket tappets.
+
+const V8 = (() => {
+  const RAD = Math.PI / 180;
+  const BORE = 101.6;
+  const STROKE = 88.4;
+  const R = STROKE / 2;
+  const ROD = 144.8;
+  const SPACING = 111.8;
+  const V_HALF = 45;
+  const DECK = 229.0;
+  const COMP = 39.6; // pin centre to crown
+  const PIN_TDC = R + ROD; // 189.0
+  const CROWN_TDC = PIN_TDC + COMP; // 228.6
+  const XS = [167.7, 55.9, -55.9, -167.7]; // front to rear
+  const S45 = Math.SQRT1_2;
+
+  // across-bank unit, perpendicular to the bore axis (positive = exhaust side)
+  const BANK = {
+    R: { ax: [0, S45, S45], out: [0, S45, -S45], name: "right" },
+    L: { ax: [0, -S45, S45], out: [0, -S45, -S45], name: "left" },
+  };
+  // Crank pin phase by station (front first), degrees from +y toward +z.
+  // Derived so the firing order comes out 1-8-4-3-6-5-7-2.
+  const PINS = [135, 225, 45, 315];
+  const ORDER = [1, 8, 4, 3, 6, 5, 7, 2];
+  const FIRE = { 1: 0, 8: 90, 4: 180, 3: 270, 6: 360, 5: 450, 7: 540, 2: 630 };
+
+  const CYL = ORDER.map((n) => {
+    const odd = n % 2 === 1;
+    const bank = odd ? "L" : "R";
+    const station = odd ? (n - 1) / 2 : (n - 2) / 2; // 0 = front
+    return { n, bank, station, x: XS[station], phase: PINS[station], fire: FIRE[n] };
+  }).sort((a, b) => a.n - b.n);
+
+  // valve windows relative to that cylinder's firing TDC, crank degrees
+  const TIMING = {
+    intake: { open: 351, close: 591, lift: 6.0 },
+    exhaust: { open: 125, close: 375, lift: 5.9 },
+  };
+  const TILT = 12; // valve lean from the bore axis, degrees, toward its own side
+  const VALVE_E = 24; // valve centre offset from the bore axis, mm
+  const SEAT_S = 246; // valve seat plane along the bore, mm
+  const CAM_DIST = 124; // seat to cam centre along the valve axis, mm
+  const BUCKET_BASE = 86; // seat to bucket base (closed), mm
+  const RET_DIST = 84; // seat to retainer centre (closed), mm
+  const SPRING_LO = 46, SPRING_HI = 81; // spring wire span along the valve axis
+
+  const rad = (d) => d * RAD;
+  const norm2 = (v) => {
+    const l = Math.hypot(v[0], v[1]) || 1;
+    return [v[0] / l, v[1] / l];
+  };
+  const rot2 = (v, deg) => {
+    const c = Math.cos(rad(deg));
+    const s = Math.sin(rad(deg));
+    return [v[0] * c - v[1] * s, v[0] * s + v[1] * c];
+  };
+
+  const pinAt = (cyl, theta) => {
+    const a = rad(cyl.phase + theta);
+    return [R * Math.cos(a), R * Math.sin(a)]; // y, z
+  };
+
+  // distance along the bore axis from the crank axis to the piston pin
+  const pinDist = (cyl, theta) => {
+    const p = pinAt(cyl, theta);
+    const u = BANK[cyl.bank].ax.slice(1);
+    const w = [u[1], -u[0]];
+    const along = p[0] * u[0] + p[1] * u[1];
+    const across = p[0] * w[0] + p[1] * w[1];
+    return along + Math.sqrt(Math.max(0, ROD * ROD - across * across));
+  };
+
+  const pinPoint = (cyl, theta) => {
+    const u = BANK[cyl.bank].ax;
+    const d = pinDist(cyl, theta);
+    return [cyl.x, u[1] * d, u[2] * d];
+  };
+
+  const crownS = (cyl, theta) => pinDist(cyl, theta) + COMP;
+
+  const cycle = (cyl, theta) => {
+    const t = theta - cyl.fire;
+    return ((t % 720) + 720) % 720;
+  };
+
+  // 0..1 phase inside the 720 crank-degree cycle
+  const strokeOf = (cyc) => {
+    if (cyc < 180) return "power";
+    if (cyc < 360) return "exhaust";
+    if (cyc < 540) return "intake";
+    return "compression";
+  };
+
+  const liftAt = (cyl, which, theta) => {
+    const w = TIMING[which];
+    const cyc = cycle(cyl, theta);
+    const from = ((cyc - w.open) % 720 + 720) % 720;
+    const span = w.close - w.open;
+    if (from > span) return 0;
+    return w.lift * Math.sin((Math.PI * from) / span) ** 2;
+  };
+
+  // valve axis direction in (y, z): bore axis leaned toward its own side
+  // valve seat point in (y, z), on the bore axis at the seat plane, offset sideways
+  const valveSeat = (cyl, which) => {
+    const b = BANK[cyl.bank];
+    const side = which === "intake" ? -1 : 1;
+    return [
+      b.ax[1] * SEAT_S + b.out[1] * side * VALVE_E,
+      b.ax[2] * SEAT_S + b.out[2] * side * VALVE_E,
+    ];
+  };
+  const valveAxis = (cyl, which) => {
+    const b = BANK[cyl.bank];
+    const u = b.ax.slice(1);
+    const o = b.out.slice(1);
+    const side = which === "intake" ? -1 : 1;
+    return norm2([u[0] + o[0] * side * Math.tan(rad(TILT)), u[1] + o[1] * side * Math.tan(rad(TILT))]);
+  };
+
+  const camPoint = (cyl, which) => {
+    const v = valveAxis(cyl, which);
+    const seat = valveSeat(cyl, which);
+    return [seat[0] + v[0] * CAM_DIST, seat[1] + v[1] * CAM_DIST];
+  };
+  const valveMid = (cyl, which) => {
+    const w = TIMING[which];
+    return cyl.fire + (w.open + w.close) / 2; // crank angle of max lift
+  };
+
+  // cam lobe peak angle in the (y,z) plane at crank angle theta
+  // The peak points from the cam centre toward the follower (down the valve
+  // axis, toward the bucket), so at max lift it meets the bucket's face.
+  const camPeak = (cyl, which, theta) => {
+    const v = valveAxis(cyl, which);
+    const base = Math.atan2(-v[1], -v[0]) / RAD;
+    return base + (theta - valveMid(cyl, which)) / 2;
+  };
+
+  // cam base circle radius, mm; lobe radius at angle psi (deg) from the peak.
+  // The window is the crank duration / 2 (cam turns at half speed).
+  const CAM_BASE = 22.0;
+  const lobeRadius = (which, psi) => {
+    const span = (TIMING[which].close - TIMING[which].open) / 4; // crank -> cam deg
+    if (Math.abs(psi) >= span) return CAM_BASE;
+    return CAM_BASE + TIMING[which].lift * Math.cos((Math.PI / 2) * (psi / span)) ** 2;
+  };
+
+  // Cam profile for a flat-faced follower (a bucket tappet). The face is at
+  // distance base + lift from the cam centre; the contact sits at the lift's
+  // slope, and the body point is that contact turned back by the cam angle.
+  // Returns points with the peak along +x, in mm.
+  const lobeProfile = (which, samples = 120) => {
+    const w = TIMING[which];
+    const half = (w.close - w.open) / 4; // cam degrees from peak to base circle
+    const liftAt = (psi) => (Math.abs(psi) >= half ? 0 : w.lift * Math.cos((Math.PI / 2) * (psi / half)) ** 2);
+    const slopeAt = (psi) => (Math.abs(psi) >= half ? 0 : -w.lift * (Math.PI / (2 * half)) * Math.sin((Math.PI * psi) / half) * (180 / Math.PI));
+    const pts = [];
+    for (let i = 0; i < samples; i++) {
+      const psi = -180 + (i / samples) * 360;
+      const d = CAM_BASE + liftAt(psi);
+      const dp = slopeAt(psi); // mm per radian
+      const a = psi * RAD;
+      pts.push([d * Math.cos(a) - dp * Math.sin(a), -d * Math.sin(a) - dp * Math.cos(a)]);
+    }
+    return pts;
+  };
+
+  // firing bookkeeping
+  const firingCyl = (theta) => ORDER[Math.floor(((((theta % 720) + 720) % 720) / 720) * 8) % 8];
+  const describe = (theta) => {
+    const t = ((theta % 720) + 720) % 720;
+    const idx = Math.floor(t / 90) % 8;
+    const current = ORDER[idx];
+    const next = ORDER[(idx + 1) % 8];
+    const toNext = 90 - (t - idx * 90);
+    return { current, next, toNext, cycle: t };
+  };
+
+  return {
+    RAD, BORE, STROKE, R, ROD, SPACING, V_HALF, DECK, COMP, PIN_TDC, CROWN_TDC, XS, PINS, ORDER, FIRE,
+    TIMING, TILT, VALVE_E, CAM_BASE, CYL, BANK, SEAT_S, CAM_DIST, BUCKET_BASE, RET_DIST, SPRING_LO, SPRING_HI,
+    pinAt, pinDist, pinPoint, crownS, cycle, strokeOf, liftAt, valveAxis, valveSeat, camPoint, valveMid, camPeak, lobeRadius, lobeProfile,
+    firingCyl, describe, rad, norm2, rot2,
+  };
+})();
+
+
+
+// A small 3D scene for the canvas viewer. Meshes are plain vertex/face lists;
+// the viewer projects and paints them. All sizes follow the V8 model and the
+// same external dimensions as the cutaway figure.
+
+const FRONT = V8.XS[0];
+const REAR = V8.XS[3] - 78;
+const DECK = 233;
+const HEAD_TOP = 327;
+const S = Math.SQRT1_2;
+
+const MAT = {
+  plinth: { fill: [150, 158, 168], alpha: 0.08, edge: [178, 190, 202], edgeAlpha: 0.22, hidden: 0.03 },
+  glass: { fill: [96, 138, 188], alpha: 0.13, edge: [134, 184, 232], edgeAlpha: 0.2, hidden: 0 },
+  glass2: { fill: [86, 158, 150], alpha: 0.17, edge: [132, 206, 196], edgeAlpha: 0.22, hidden: 0 },
+  glass3: { fill: [146, 122, 186], alpha: 0.12, edge: [186, 162, 226], edgeAlpha: 0.2, hidden: 0 },
+  intake: { fill: [78, 166, 208], alpha: 0.24, edge: [136, 212, 246], edgeAlpha: 0.3, hidden: 0 },
+  exhaust: { fill: [198, 132, 74], alpha: 0.26, edge: [242, 180, 116], edgeAlpha: 0.32, hidden: 0 },
+  detail: { fill: [142, 164, 190], alpha: 0.22, edge: [192, 214, 238], edgeAlpha: 0.26, hidden: 0 },
+  crank: { fill: [188, 148, 94], alpha: 1, edge: [250, 214, 158], edgeAlpha: 0.5, hidden: 0 },
+  rod: { fill: [132, 168, 202], alpha: 1, edge: [204, 232, 255], edgeAlpha: 0.48, hidden: 0 },
+  piston: { fill: [208, 212, 218], alpha: 1, edge: [252, 255, 255], edgeAlpha: 0.5, hidden: 0 },
+  valve: { fill: [186, 190, 196], alpha: 1, edge: [240, 246, 252], edgeAlpha: 0.46, hidden: 0 },
+  cam: { fill: [208, 172, 96], alpha: 1, edge: [252, 224, 156], edgeAlpha: 0.52, hidden: 0 },
+  chain: { fill: [190, 196, 208], alpha: 1, edge: [238, 244, 252], edgeAlpha: 0.8, hidden: 0 },
+  flywheel: { fill: [168, 172, 184], alpha: 1, edge: [236, 242, 252], edgeAlpha: 0.62, hidden: 0 },
+  fuel: { fill: [206, 158, 78], alpha: 0.94, edge: [255, 212, 132], edgeAlpha: 0.65, hidden: 0.04 },
+  plug: { fill: [238, 234, 220], alpha: 0.94, edge: [255, 252, 240], edgeAlpha: 0.55, hidden: 0.04 },
+  coil: { fill: [56, 60, 69], alpha: 0.96, edge: [150, 162, 176], edgeAlpha: 0.52, hidden: 0.04 },
+  sprocket: { fill: [176, 154, 108], alpha: 1, edge: [240, 218, 168], edgeAlpha: 0.66, hidden: 0 },
+  bore: { edge: [218, 240, 255], edgeAlpha: 0.8, hidden: 0.08 },
+};
+
+// ---------------- mesh helpers ----------------
+const unit = (a) => {
+  const l = Math.hypot(a[0], a[1], a[2]) || 1;
+  return [a[0] / l, a[1] / l, a[2] / l];
+};
+const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+
+function mesh() { return { v: [], f: [] }; }
+const addV = (m, p) => { m.v.push(p); return m.v.length - 1; };
+
+function frameAlong(o, a) {
+  const axis = unit(a);
+  const helper = Math.abs(axis[2]) > 0.9 ? [1, 0, 0] : [0, 0, 1];
+  const u = unit(cross(helper, axis));
+  const v = cross(axis, u);
+  return { o, a: axis, u, v };
+}
+const frameOf = (o, a, u, v) => ({ o, a: unit(a), u: unit(u), v: unit(v) });
+const pointOf = (F, s, r, ang) => {
+  const c = Math.cos(ang), n = Math.sin(ang);
+  return [
+    F.o[0] + F.a[0] * s + r * (c * F.u[0] + n * F.v[0]),
+    F.o[1] + F.a[1] * s + r * (c * F.u[1] + n * F.v[1]),
+    F.o[2] + F.a[2] * s + r * (c * F.u[2] + n * F.v[2]),
+  ];
+};
+
+// Extrude a convex polygon given in the frame's (u, v) plane along a.
+function prism(F, poly, s0, s1) {
+  const m = mesh();
+  const ring0 = poly.map(([x, y]) => addV(m, pointOf(F, s0, 0, 0).map((_, i) => F.o[i] + F.a[i] * s0 + F.u[i] * x + F.v[i] * y)));
+  const ring1 = poly.map(([x, y]) => addV(m, pointOf(F, s1, 0, 0).map((_, i) => F.o[i] + F.a[i] * s1 + F.u[i] * x + F.v[i] * y)));
+  const n = poly.length;
+  m.f.push(ring0, ring1);
+  for (let i = 0; i < n; i++) m.f.push([ring0[i], ring0[(i + 1) % n], ring1[(i + 1) % n], ring1[i]]);
+  orient(m);
+  return m;
+}
+
+// A solid of revolution along F.a from a [s, r] meridian. r = 0 makes a pole.
+function lathe(F, profile, segs = 16) {
+  const m = mesh();
+  const rings = profile.map(([s, r]) => {
+    if (r <= 1e-6) return { pole: addV(m, pointOf(F, s, 0, 0)) };
+    const ids = [];
+    for (let k = 0; k < segs; k++) ids.push(addV(m, pointOf(F, s, r, (k / segs) * Math.PI * 2)));
+    return { ids };
+  });
+  for (let i = 0; i < rings.length - 1; i++) {
+    const a = rings[i], b = rings[i + 1];
+    for (let k = 0; k < segs; k++) {
+      const k2 = (k + 1) % segs;
+      if (a.pole !== undefined && b.ids) m.f.push([a.pole, b.ids[k2], b.ids[k]]);
+      else if (b.pole !== undefined && a.ids) m.f.push([a.ids[k], a.ids[k2], b.pole]);
+      else if (a.ids && b.ids) m.f.push([a.ids[k], a.ids[k2], b.ids[k2], b.ids[k]]);
+    }
+  }
+  orient(m);
+  return m;
+}
+
+// A cylinder wire (no surface): the viewer draws its rings and silhouette.
+function wireCylinder(o, axis, r, s0, s1, segs = 24) {
+  return { kind: "wireCylinder", o, axis: unit(axis), r, s0, s1, segs };
+}
+function wirePath(points, color, width = 1, alpha = 1) {
+  return { kind: "wirePath", points, color, width, alpha };
+}
+
+// Orient faces outward from the mesh centroid (all our solids are star-shaped).
+function orient(m) {
+  if (!m.v.length) return;
+  const c = m.v.reduce((a, p) => [a[0] + p[0], a[1] + p[1], a[2] + p[2]], [0, 0, 0]).map((x) => x / m.v.length);
+  for (const face of m.f) {
+    if (face.length < 3) continue;
+    const [a, b, d] = face.slice(0, 3).map((i) => m.v[i]);
+    const n = cross(sub(b, a), sub(d, a));
+    const fc = face.reduce((acc, i) => [acc[0] + m.v[i][0], acc[1] + m.v[i][1], acc[2] + m.v[i][2]], [0, 0, 0]).map((x) => x / face.length);
+    if (dot(n, sub(fc, c)) < 0) face.reverse();
+  }
+}
+
+// ---------------- engine helpers ----------------
+const bankPoint = (bank, s, e) => {
+  const b = V8.BANK[bank];
+  return [b.ax[1] * s + b.out[1] * e, b.ax[2] * s + b.out[2] * e];
+};
+const bankPoly = (bank, s0, s1, e0, e1) => [bankPoint(bank, s0, e0), bankPoint(bank, s0, e1), bankPoint(bank, s1, e1), bankPoint(bank, s1, e0)];
+const bankFrame = (bank, x) => {
+  const b = V8.BANK[bank];
+  return frameOf([x, 0, 0], b.ax, b.out, [1, 0, 0]);
+};
+const FLOOR = frameOf([0, 0, 0], [0, 0, 1], [1, 0, 0], [0, 1, 0]);
+const FX = frameOf([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
+const prismBank = (bank, poly, x0, x1) => prism(frameOf([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]), poly, x0, x1);
+const prismX = (poly, x0, x1) => prism(FX, poly, x0, x1);
+const disc = (F, s0, s1, r, segs = 16) => lathe(F, [[s0, 0], [s0, r], [s1, r], [s1, 0]], segs);
+
+const LOBE = { intake: null, exhaust: null };
+const hull2 = (points) => {
+  const sorted = [...points].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const cr = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const lower = [];
+  for (const p of sorted) { while (lower.length >= 2 && cr(lower[lower.length - 2], lower[lower.length - 1], p) <= 0) lower.pop(); lower.push(p); }
+  const upper = [];
+  for (let i = sorted.length - 1; i >= 0; i--) { while (upper.length >= 2 && cr(upper[upper.length - 2], upper[upper.length - 1], sorted[i]) <= 0) upper.pop(); upper.push(sorted[i]); }
+  return [...lower.slice(0, -1), ...upper.slice(0, -1)];
+};
+const circle2 = (cx, cz, r, steps = 20) => Array.from({ length: steps }, (_, i) => [cx + r * Math.cos((i / steps) * Math.PI * 2), cz + r * Math.sin((i / steps) * Math.PI * 2)]);
+// A toothed outline in the (y, z) plane: valleys and tips, spun by spin (rad).
+const gearPoly = ([cy, cz], r, teeth, spin, depth = 5) => {
+  const pts = [];
+  for (let k = 0; k < teeth * 2; k++) {
+    const a = spin + (k * Math.PI) / teeth;
+    const rr = r + (k % 2 === 0 ? depth : -depth * 0.85);
+    pts.push([cy + Math.cos(a) * rr, cz + Math.sin(a) * rr]);
+  }
+  return pts;
+};
+
+LOBE.intake = V8.lobeProfile("intake");
+LOBE.exhaust = V8.lobeProfile("exhaust");
+
+// ---------------- timing drive ----------------
+const CHAIN_R = 20; // crank sprocket pitch radius (18 teeth)
+const CAM_R = 40; // cam sprocket pitch radius (36 teeth)
+const CHAIN_PITCH = (Math.PI * 2 * CHAIN_R) / 18;
+const chainFor = (bank) => {
+  const x = FRONT + (bank === "R" ? 14 : 38);
+  const proto = V8.CYL.find((c) => c.bank === bank && c.station === 0);
+  const cams = ["intake", "exhaust"].map((w) => V8.camPoint(proto, w));
+  const circles = [{ c: [0, 0], r: CHAIN_R }, ...cams.map((c) => ({ c, r: CAM_R }))];
+  const samples = [];
+  for (const { c, r } of circles) for (let k = 0; k < 120; k++) {
+    const a = (k / 120) * Math.PI * 2;
+    samples.push([c[0] + Math.cos(a) * r, c[1] + Math.sin(a) * r]);
+  }
+  const hull = hull2(samples);
+  const lengths = [0];
+  for (let i = 1; i <= hull.length; i++) {
+    const a = hull[i - 1], b = hull[i % hull.length];
+    lengths.push(lengths[i - 1] + Math.hypot(b[0] - a[0], b[1] - a[1]));
+  }
+  const total = lengths[lengths.length - 1];
+  const at = (s) => {
+    s = ((s % total) + total) % total;
+    let i = 1;
+    while (i < lengths.length - 1 && lengths[i] < s) i++;
+    const a = hull[i - 1], b = hull[i % hull.length];
+    const t = (s - lengths[i - 1]) / (lengths[i] - lengths[i - 1] || 1);
+    return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+  };
+  return { bank, x, cams, hull, lengths, total, at };
+};
+const CHAINS = { L: chainFor("L"), R: chainFor("R") };
+
+// Sequential port injection: nozzle and spray target for each cylinder.
+const FUEL = V8.CYL.map((cyl) => {
+  const b = V8.BANK[cyl.bank];
+  const p0 = bankPoint(cyl.bank, 282, -84);
+  const n = [-b.out[1], -b.out[2]];
+  const seat = V8.valveSeat(cyl, "intake");
+  const v = V8.valveAxis(cyl, "intake");
+  const nozzle = [cyl.x, p0[0] + n[0] * 12, p0[1] + n[1] * 12 + 10];
+  const target = [cyl.x, seat[0] - v[0] * 40, seat[1] - v[1] * 40];
+  const back = unit([0, nozzle[1] - target[1], nozzle[2] - target[2]]);
+  return { n: cyl.n, bank: cyl.bank, nozzle, target, back };
+});
+
+// ---------------- static scene ----------------
+function buildStatic() {
+  const parts = [];
+  const wires = [];
+  const add = (name, m, mat) => parts.push({ name, mesh: m, mat });
+
+  // plinth and pedestal
+  add("plinth", disc(FLOOR, -170, -154, 430, 64), "plinth");
+  add("pedestal", disc(FLOOR, -154, -94, 118, 32), "plinth");
+  wires.push(wirePath(Array.from({ length: 73 }, (_, i) => { const a = (i / 72) * Math.PI * 2; return [Math.cos(a) * 430, Math.sin(a) * 430, -153.6]; }), [180, 198, 214], 0.7, 0.28));
+  for (let i = 0; i < 48; i++) {
+    const a = (i / 48) * Math.PI * 2;
+    wires.push(wirePath([[Math.cos(a) * 396, Math.sin(a) * 396, -153.5], [Math.cos(a) * 424, Math.sin(a) * 424, -153.5]], [190, 205, 220], i % 4 === 0 ? 0.9 : 0.5, i % 4 === 0 ? 0.25 : 0.12));
+  }
+
+  // block: banks, crankcase, sump, pan rail
+  add("block.L", prismX(bankPoly("L", 62, 233, -80, 80), REAR, FRONT), "glass");
+  add("block.R", prismX(bankPoly("R", 62, 233, -80, 80), REAR, FRONT), "glass");
+  add("crankcase", prismX([[-100, -42], [100, -42], [100, 52], [-100, 52]], REAR, FRONT), "glass");
+  add("sump", prismX([[-86, -42], [86, -42], [70, -94], [-70, -94]], REAR, FRONT), "glass");
+  add("panrail", prismX([[-96, -46], [96, -46], [96, -40], [-96, -40]], REAR, FRONT), "detail");
+
+  // heads and covers, both banks
+  for (const bank of ["L", "R"]) {
+    add(`head.${bank}`, prismX(bankPoly(bank, 233, 327, -84, 84), REAR, FRONT), "glass2");
+    if (bank === "L") {
+      const cover = [bankPoint(bank, 327, -76), bankPoint(bank, 327, 76), bankPoint(bank, 358, 76), bankPoint(bank, 390, 60), bankPoint(bank, 402, 34), bankPoint(bank, 402, -34), bankPoint(bank, 390, -60), bankPoint(bank, 358, -76)];
+      add(`cover.${bank}`, prismX(cover, REAR, FRONT), "glass3");
+    }
+    // cam carrier rails
+    for (const e of [-79, 79]) add(`rail.${bank}.${e}`, prismX(bankPoly(bank, 327, 344, e - 5, e + 5), REAR + 4, FRONT), "detail");
+    // cam caps (legs + straps) around the true cam cross-section
+    for (const which of ["intake", "exhaust"]) {
+      const proto = V8.CYL.find((c) => c.bank === bank && c.station === 0);
+      const camPt = V8.camPoint(proto, which);
+      const b = V8.BANK[bank];
+      const camE = camPt[0] * b.out[1] + camPt[1] * b.out[2];
+      const camS = camPt[0] * b.ax[1] + camPt[1] * b.ax[2];
+      for (const x of [111.8, 0, -111.8, -223.6]) {
+        for (const [e0, e1] of [[camE - 24, camE - 14], [camE + 14, camE + 24]]) add(`cap.${bank}.${which}.${x}.${e0}`, prismX(bankPoly(bank, 327, camS + 11, e0, e1), x - 9, x + 9), "glass2");
+        add(`strap.${bank}.${which}.${x}`, prismX(bankPoly(bank, camS + 11.9, camS + 21.5, camE - 25, camE + 25), x - 9, x + 9), "detail");
+      }
+    }
+  }
+
+  // throttle bodies
+  for (const bank of ["L", "R"]) {
+    const b = V8.BANK[bank];
+    const p0 = bankPoint(bank, 282, -84);
+    const n = [-b.out[1], -b.out[2]];
+    const axis = unit([0, n[0] * 0.45, n[1] * 0.45 + 1]);
+    for (const x of V8.XS) {
+      const runF = frameAlong([x, p0[0] + n[0] * 4, p0[1] + n[1] * 4], [0, n[0], n[1]]);
+      add(`stack.runner.${bank}.${x}`, disc(runF, 0, 24, 22, 18), "intake");
+      const base = [x, p0[0] + n[0] * 28, p0[1] + n[1] * 28];
+      const Fb = frameAlong(base, [0, n[0], n[1]]);
+      add(`stack.base.${bank}.${x}`, disc(Fb, 0, 6, 26, 18), "intake");
+      const F = frameAlong(base, axis);
+      add(`stack.body.${bank}.${x}`, lathe(F, [[4, 0], [4, 20], [10, 20], [10, 21], [52, 21], [52, 0]], 16), "intake");
+      add(`stack.horn.${bank}.${x}`, lathe(F, [[52, 0], [52, 21], [56, 21.6], [64, 24.5], [70, 29], [74, 33], [74, 0]], 20), "intake");
+    }
+  }
+
+  // exhaust logs and branches
+  for (const bank of ["L", "R"]) {
+    const b = V8.BANK[bank];
+    for (const x of V8.XS) {
+      const p = bankPoint(bank, 296, 84);
+      const F = frameAlong([x, p[0], p[1]], [0, b.out[1], b.out[2]]);
+      add(`exhaust.flange.${bank}.${x}`, disc(F, 0, 9, 16, 14), "exhaust");
+    }
+    const logC = bankPoint(bank, 244, 162);
+    const logF = frameAlong([0, logC[0], logC[1]], [1, 0, 0]);
+    add(`exhaust.log.${bank}`, disc(logF, REAR + 26, FRONT - 34, 33, 24), "exhaust");
+    const F = frameOf([REAR + 26, logC[0], logC[1]], [1, 0, 0], [0, b.ax[1], b.ax[2]], [0, b.out[1], b.out[2]]);
+    for (let i = 1; i < 4; i++) {
+      const x = V8.XS[i];
+      const port = bankPoint(bank, 296, 93);
+      const top = [x, port[0], port[1]];
+      const bottom = [x, F.o[1] - F.v[1] * 26, F.o[2] - F.v[2] * 26];
+      const axis = unit([0, bottom[1] - top[1], bottom[2] - top[2]]);
+      const out3 = [0, b.out[1], b.out[2]];
+      const uDir = unit(sub(out3, [axis[0] * dot(out3, axis), axis[1] * dot(out3, axis), axis[2] * dot(out3, axis)]));
+      const vDir = unit(cross(axis, uDir));
+      const BF = frameOf(top, axis, uDir, vDir);
+      const branch = [[0.5, -20], [22.5, -20], [22.5, 20], [0.5, 20]];
+      add(`exhaust.branch.${bank}.${i}`, prism(BF, branch, 0, 70), "exhaust");
+    }
+    const outlet = frameAlong([REAR + 26, logC[0], logC[1]], [-1, 0, 0]);
+    add(`exhaust.outlet.${bank}`, lathe(outlet, [[0, 33], [18, 25], [22, 19], [22, 0]], 20), "exhaust");
+  }
+
+  // cam tubes (they rotate about x, so a plain cylinder is exact)
+  for (const bank of ["L", "R"]) {
+    for (const which of ["intake", "exhaust"]) {
+      const proto = V8.CYL.find((c) => c.bank === bank && c.station === 0);
+      const cam = V8.camPoint(proto, which);
+      const F = frameAlong([0, cam[0], cam[1]], [1, 0, 0]);
+      add(`cam.${bank}.${which}`, disc(F, REAR + 10, FRONT + 44, 12, 14), "cam");
+    }
+  }
+  // front timing drive: crank nose, sprockets and chain loops
+  add("crank.nose", disc(frameAlong([FRONT - 8, 0, 0], [1, 0, 0]), 0, 56, 15, 20), "crank");
+  for (const bank of ["L", "R"]) {
+    const ch = CHAINS[bank];
+    add(`sprocket.hub.${bank}`, disc(frameAlong([ch.x, 0, 0], [1, 0, 0]), -8, 8, 9, 16), "sprocket");
+    for (const [i, which] of ["intake", "exhaust"].entries()) {
+      const cam = ch.cams[i];
+      add(`sprocket.hub.${bank}.${which}`, disc(frameAlong([ch.x, cam[0], cam[1]], [1, 0, 0]), -8, 8, 12, 16), "sprocket");
+    }
+    // the chain run itself
+    const chainPts = [...ch.hull, ch.hull[0]].map(([y, z]) => [ch.x + 5.5, y, z]);
+    wires.push({ kind: "wirePath", points: chainPts, color: [204, 210, 222], width: 1.0, alpha: 0.18 });
+    // a chain guide rail with a shoe and a pivot, along the outer run
+    const cxy = ch.hull.reduce((a, q) => [a[0] + q[0], a[1] + q[1]], [0, 0]).map((v) => v / ch.hull.length);
+    const rail = [];
+    for (let i = 0; i <= 14; i++) {
+      const q = ch.at(ch.total * (0.16 + i / 14 * 0.26));
+      const dx = q[0] - cxy[0], dz = q[1] - cxy[1];
+      const l = Math.hypot(dx, dz) || 1;
+      rail.push([ch.x + 5.5, q[0] + (dx / l) * 9, q[1] + (dz / l) * 9]);
+    }
+    wires.push({ kind: "wirePath", points: rail, color: [118, 126, 142], width: 3.2, alpha: 0.55 });
+    wires.push({ kind: "wirePath", points: rail.map(([x, y, z]) => [x + 0.1, y * 0.995, z * 0.995]), color: [198, 208, 224], width: 0.8, alpha: 0.35 });
+  }
+
+  // crank main journals (on the axis, rotation-invariant)
+  for (const x of [-223.6, -111.8, 0, 111.8, 167.7]) add(`journal.${x}`, disc(frameAlong([x, 0, 0], [1, 0, 0]), -12, 12, 30, 24), "crank");
+
+  // power output: flywheel, ring gear and output shaft at the rear
+  add("flywheel.hub", disc(frameAlong([-264, 0, 0], [1, 0, 0]), -20, 20, 38, 24), "crank");
+  add("crank.stub", disc(frameAlong([-240, 0, 0], [1, 0, 0]), -12, 12, 34, 24), "crank");
+  add("output.shaft", disc(frameAlong([-302, 0, 0], [1, 0, 0]), -28, 28, 26, 24), "flywheel");
+  add("output.flange", disc(frameAlong([-338, 0, 0], [1, 0, 0]), -8, 8, 58, 32), "flywheel");
+  add("output.pilot", disc(frameAlong([-338, 0, 0], [1, 0, 0]), 8, 20, 20, 20), "crank");
+  wires.push({ kind: "wirePath", points: Array.from({ length: 65 }, (_, i) => { const a = (i / 64) * Math.PI * 2; return [-279.2, Math.cos(a) * 168, Math.sin(a) * 168]; }), color: [240, 226, 188], width: 1.2, alpha: 0.7 });
+  for (const r of [150, 132, 80]) wires.push({ kind: "wirePath", points: Array.from({ length: 65 }, (_, i) => { const a = (i / 64) * Math.PI * 2; return [-279.1, Math.cos(a) * r, Math.sin(a) * r]; }), color: [120, 128, 142], width: 0.7, alpha: 0.4 });
+
+  // sequential port injection: injectors and a fuel rail on each bank
+  for (const f of FUEL) {
+    const Fb = frameAlong(f.nozzle, f.back);
+    add(`injector.${f.n}`, lathe(Fb, [[0, 0], [0, 5], [16, 5], [16, 0]], 12), "fuel");
+    add(`injector.tip.${f.n}`, disc(Fb, -2, 0, 3, 10), "fuel");
+    const cap = [f.nozzle[0], f.nozzle[1] + f.back[1] * 10 + 5, f.nozzle[2] + f.back[2] * 10];
+    add(`injector.plug.${f.n}`, disc(frameAlong(cap, [0, f.back[1], f.back[2]]), 0, 6, 3.2, 8), "fuel");
+  }
+  for (const bank of ["L", "R"]) {
+    const f = FUEL.find((q) => q.bank === bank);
+    const railY = f.nozzle[1] + f.back[1] * 16;
+    const railZ = f.nozzle[2] + f.back[2] * 16;
+    add(`fuelrail.${bank}`, disc(frameAlong([REAR + 20, railY, railZ], [1, 0, 0]), 0, FRONT - REAR - 10, 6, 14), "fuel");
+    add(`fuelrail.end.${bank}`, disc(frameAlong([REAR + 14, railY, railZ], [1, 0, 0]), 0, 10, 9, 12), "fuel");
+  }
+
+  // spark plugs, one per cylinder, down the centre of each chamber
+  for (const cyl of V8.CYL) {
+    const b = V8.BANK[cyl.bank];
+    const F = frameOf([cyl.x, 0, 0], b.ax, b.out, [1, 0, 0]);
+    add(`plug.shell.${cyl.n}`, lathe(F, [[242, 0], [242, 1.4], [246, 1.4], [246, 7], [256, 7], [256, 5], [260, 5], [260, 0]], 12), "valve");
+    add(`plug.hex.${cyl.n}`, lathe(F, [[260, 0], [260, 5], [266, 9], [270, 9], [270, 5], [274, 5], [274, 0]], 12), "valve");
+    add(`plug.cer.${cyl.n}`, lathe(F, [[274, 0], [274, 7], [290, 7], [294, 6.2], [300, 6.2], [304, 7], [314, 7], [318, 6.2], [324, 6.2], [328, 7], [338, 7], [342, 6.2], [348, 6.2], [352, 7], [362, 7], [370, 6.2], [376, 5.6], [380, 0]], 14), "plug");
+    add(`coil.body.${cyl.n}`, lathe(F, [[376, 0], [376, 7.5], [380, 9], [390, 9], [394, 8], [396, 6], [396, 0]], 14), "coil");
+    add(`coil.cap.${cyl.n}`, lathe(F, [[396, 0], [396, 5], [401, 5], [401, 0]], 12), "plug");
+    for (const s of [382, 388]) {
+      const pts = [];
+      for (let k = 0; k <= 24; k++) pts.push(pointOf(F, s, 9.2, (k / 24) * Math.PI * 2));
+      wires.push({ kind: "wirePath", points: pts, color: [18, 20, 24], width: 1.1, alpha: 0.7 });
+    }
+    const ringPts = [];
+    for (let k = 0; k <= 28; k++) ringPts.push(pointOf(F, 327, 11, (k / 28) * Math.PI * 2));
+    wires.push({ kind: "wirePath", points: ringPts, color: [46, 52, 60], width: 0.9, alpha: 0.6 });
+  }
+
+  // cylinder bores as clear wire tubes with a ring at each end
+  const bores = V8.CYL.map((cyl) => {
+    const u = V8.BANK[cyl.bank].ax;
+    const o = [cyl.x, 0, 0];
+    wires.push(wireCylinder(o, u, 51.5, 92, 236, 30));
+    return { n: cyl.n, x: cyl.x, bank: cyl.bank, axis: u, top: [cyl.x, ...bankPoint(cyl.bank, 236, 0)], tip: [cyl.x, ...bankPoint(cyl.bank, 92, 0)] };
+  });
+  return { parts, wires, bores, fuel: FUEL };
+}
+
+// ---------------- dynamic scene ----------------
+function buildDynamic(theta) {
+  const parts = [];
+  const wires = [];
+  const chainDots = [];
+  const chainPlates = [];
+  const add = (name, m, mat) => parts.push({ name, mesh: m, mat });
+
+  // crank pins and webs
+  for (let i = 0; i < 4; i++) {
+    const phase = V8.PINS[i] + theta;
+    const a = (phase * Math.PI) / 180;
+    const p = [V8.R * Math.cos(a), V8.R * Math.sin(a)];
+    const x = V8.XS[i];
+    add(`pin.${i}`, disc(frameAlong([x, p[0], p[1]], [1, 0, 0]), -28, 28, 23, 18), "crank");
+    const cw = Math.atan2(-p[1], -p[0]);
+    const poly = hull2([...circle2(0, 0, 30, 14), ...circle2(p[0], p[1], 24, 12), ...circle2(Math.cos(cw) * 46, Math.sin(cw) * 46, 47, 20)]);
+    for (const dx of [-35, 35]) add(`web.${i}.${dx}`, prismX(poly, x + dx - 7, x + dx + 7), "crank");
+  }
+
+  // rods and pistons
+  for (const cyl of V8.CYL) {
+    const u3 = V8.BANK[cyl.bank].ax;
+    const pin = V8.pinAt(cyl, theta);
+    const d = V8.pinDist(cyl, theta);
+    const pin3 = [cyl.x, pin[0], pin[1]];
+    const pistonPin = [cyl.x, u3[1] * d, u3[2] * d];
+    const rodAng = V8.BANK[cyl.bank].out;
+    // rod: a beam between the pin and the piston pin, offset along x by bank
+    const off = cyl.bank === "R" ? 13 : -13;
+    const A = [cyl.x + off, pin[0], pin[1]];
+    const B = [cyl.x + off, pistonPin[1], pistonPin[2]];
+    // connecting rod: a steel beam with eyes, cap line, bearing bores and I-beam rib
+    const rr = [0, B[1] - A[1], B[2] - A[2]];
+    const L = Math.hypot(rr[1], rr[2]) || 1;
+    const u2 = [rr[1] / L, rr[2] / L];
+    const v2 = [-u2[1], u2[0]];
+    const Frod = frameOf(A, [1, 0, 0], [0, u2[0], u2[1]], [0, v2[0], v2[1]]);
+    const rodPoly = hull2([...circle2(0, 0, 25, 20), ...circle2(L, 0, 15, 16)]);
+    add(`rod.${cyl.n}`, prism(Frod, rodPoly, -6.5, 6.5), "rod");
+    // the big end cap split and its bolts
+    const side = (u, v, x) => [A[0] + x, A[1] + u2[0] * u + v2[0] * v, A[2] + u2[1] * u + v2[1] * v];
+    wires.push({ kind: "wirePath", points: [side(0, -23, 6.7), side(0, 23, 6.7)], color: [24, 28, 34], width: 0.9, alpha: 0.6 });
+    chainDots.push({ p: side(7, -14, 6.9), r: 2.2, color: [240, 214, 150], alpha: 0.9 });
+    chainDots.push({ p: side(7, 14, 6.9), r: 2.2, color: [240, 214, 150], alpha: 0.9 });
+    // bearing bores and the I-beam line
+    for (const [at, r] of [[0, 17], [L, 9]]) {
+      const pts = [];
+      for (let k = 0; k <= 32; k++) {
+        const a = (k / 32) * Math.PI * 2;
+        pts.push(side(at + Math.cos(a) * r, Math.sin(a) * r, 6.8));
+      }
+      wires.push({ kind: "wirePath", points: pts, color: [20, 24, 30], width: 0.9, alpha: 0.7 });
+    }
+    wires.push({ kind: "wirePath", points: [side(L * 0.24, 0, 6.8), side(L * 0.8, 0, 6.8)], color: [20, 24, 30], width: 0.8, alpha: 0.55 });
+
+    // piston: skirt, three ring grooves, crown
+    const F = frameOf([pistonPin[0], pistonPin[1], pistonPin[2]], u3, V8.BANK[cyl.bank].out, [1, 0, 0]);
+    const C = V8.COMP;
+    const prof = [
+      [-26, 0], [-26, 41], [-17, 50.8],
+      [C - 25, 50.8], [C - 25, 48.4], [C - 22, 48.4], [C - 22, 50.8],
+      [C - 19, 50.8], [C - 19, 48.4], [C - 16, 48.4], [C - 16, 50.8],
+      [C - 13, 50.8], [C - 13, 48.4], [C - 10, 48.4], [C - 10, 50.8],
+      [C - 6, 50.8], [C - 2, 50], [C, 43], [C, 0],
+    ];
+    add(`piston.${cyl.n}`, lathe(F, prof, 24), "piston");
+    // wrist pin
+    add(`pin.${cyl.n}`, disc(frameAlong([cyl.x, pistonPin[1], pistonPin[2]], [1, 0, 0]), -52, 52, 12, 16), "rod");
+    // ring lands as fine dark rings
+    for (const [ix, s0] of [0, 1, 2].entries()) {
+      const ss = C - 23.5 + ix * 3;
+      const ringPts = [];
+      const u = V8.BANK[cyl.bank].out;
+      for (let k = 0; k <= 40; k++) {
+        const a = (k / 40) * Math.PI * 2;
+        ringPts.push([cyl.x + Math.cos(a) * 50.9 * u[0], pistonPin[1] + u3[1] * ss + Math.cos(a) * 50.9 * u[1], pistonPin[2] + u3[2] * ss + Math.cos(a) * 50.9 * u[2]]);
+      }
+      wires.push({ kind: "wirePath", points: ringPts, color: [24, 28, 34], width: 1.0, alpha: 0.75 });
+    }
+
+    // valves, springs, buckets on both banks
+    for (const which of ["intake", "exhaust"]) {
+      const seat = V8.valveSeat(cyl, which);
+      const v = V8.valveAxis(cyl, which);
+      const lift = V8.liftAt(cyl, which, theta);
+      const Fv = frameOf([cyl.x, seat[0] - v[0] * lift, seat[1] - v[1] * lift], [0, v[0], v[1]], V8.BANK[cyl.bank].out, [1, 0, 0]);
+      add(`valve.${cyl.n}.${which}`, lathe(Fv, [[-16, 0], [-16, 17], [-6, 18], [0, 7], [0, 4.2], [92, 4.2], [92, 0]], 12), "valve");
+      // spring helix as a wire, around the valve axis
+      const spring = [];
+      const turns = 6;
+      const lo = 46, hi = 80 - lift;
+      const u = V8.BANK[cyl.bank].out;
+      const w = unit(cross([0, v[0], v[1]], u));
+      for (let k = 0; k <= 60; k++) {
+        const t = k / 60;
+        const ang = t * turns * Math.PI * 2;
+        const s = lo + (hi - lo) * t;
+        const c = Math.cos(ang) * 16, sn = Math.sin(ang) * 16;
+        spring.push([
+          cyl.x + c * u[0] + sn * w[0],
+          seat[0] + v[0] * s + c * u[1] + sn * w[1],
+          seat[1] + v[1] * s + c * u[2] + sn * w[2],
+        ]);
+      }
+      wires.push({ kind: "wirePath", points: spring, color: [198, 220, 238], width: 0.8, alpha: 0.42 });
+      const Fbuck = frameOf([cyl.x, seat[0] + v[0] * (V8.BUCKET_BASE - lift), seat[1] + v[1] * (V8.BUCKET_BASE - lift)], [0, v[0], v[1]], u, [1, 0, 0]);
+      add(`bucket.${cyl.n}.${which}`, disc(Fbuck, 0, 16, 17, 14), "valve");
+    }
+  }
+
+  // cam lobes
+  for (const bank of ["L", "R"]) {
+    for (const which of ["intake", "exhaust"]) {
+      const proto = V8.CYL.find((c) => c.bank === bank && c.station === 0);
+      const cam = V8.camPoint(proto, which);
+      const body = LOBE[which];
+      for (let i = 0; i < 4; i++) {
+        const cyl = V8.CYL.find((c) => c.bank === bank && c.station === i);
+        const peak = V8.camPeak(cyl, which, theta);
+        const c = Math.cos((peak * Math.PI) / 180), s = Math.sin((peak * Math.PI) / 180);
+        const poly = body.map(([x, y]) => [cam[0] + x * c - y * s, cam[1] + x * s + y * c]);
+        const F = frameOf([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
+        add(`lobe.${cyl.n}.${which}`, prism(F, poly, cyl.x - 11, cyl.x + 11), "cam");
+      }
+    }
+  }
+  // timing: sprocket teeth and chain links
+  // flywheel ring gear and output flange bolts, turning with the crank
+  {
+    const spin = (theta * Math.PI) / 180;
+    // the ring gear turns with the crank; a missing index tooth and a bright
+    // timing mark make the rotation unmistakable even when the teeth alias
+    const flyPoly = gearPoly([0, 0], 162, 60, spin, 7);
+    flyPoly.splice(0, 1);
+    add("flywheel.gear", prism(FX, flyPoly, -278, -250), "flywheel");
+    wires.push({ kind: "wirePath", points: [[-279.6, Math.cos(spin) * 148, Math.sin(spin) * 148], [-279.6, Math.cos(spin) * 176, Math.sin(spin) * 176]], color: [255, 232, 168], width: 2.4, alpha: 0.95 });
+    wires.push({ kind: "wirePath", points: [[-279.6, Math.cos(spin + Math.PI) * 155, Math.sin(spin + Math.PI) * 155], [-279.6, Math.cos(spin + Math.PI) * 172, Math.sin(spin + Math.PI) * 172]], color: [255, 220, 140], width: 1.4, alpha: 0.7 });
+    const band = [];
+    for (let k = 0; k <= 14; k++) {
+      const a = spin + (k / 14) * (Math.PI * 2 * 3) / 60;
+      band.push([-279.7, Math.cos(a) * 170, Math.sin(a) * 170]);
+    }
+    wires.push({ kind: "wirePath", points: band, color: [255, 214, 110], width: 3.6, alpha: 0.95 });
+    wires.push({ kind: "wirePath", points: [[-346.6, Math.cos(spin) * 44, Math.sin(spin) * 44], [-346.6, Math.cos(spin) * 56, Math.sin(spin) * 56]], color: [20, 24, 30], width: 1.4, alpha: 0.8 });
+    for (let k = 0; k < 8; k++) {
+      const a = (k / 8) * Math.PI * 2 + spin;
+      chainDots.push({ p: [-279.5, Math.cos(a) * 100, Math.sin(a) * 100], r: 3.2, color: [255, 214, 130], alpha: 0.9 });
+    }
+    for (let k = 0; k < 6; k++) {
+      const a = (k / 6) * Math.PI * 2 + spin + 0.5;
+      chainDots.push({ p: [-279.4, Math.cos(a) * 118, Math.sin(a) * 118], r: 5.4, color: [10, 12, 16], alpha: 0.85 });
+    }
+    for (let k = 0; k < 6; k++) {
+      const a = (k / 6) * Math.PI * 2 + spin;
+      chainDots.push({ p: [-346.5, Math.cos(a) * 40, Math.sin(a) * 40], r: 2.6, color: [226, 232, 242], alpha: 0.8 });
+    }
+  }
+  for (const bank of ["L", "R"]) {
+    const ch = CHAINS[bank];
+    const phase = ((CHAIN_R * theta * Math.PI) / 180) % ch.total;
+    // toothed sprockets: 18 on the crank, 36 on each cam, turning as they should
+    const sprockets = [
+      { c: [0, 0], r: CHAIN_R, n: 18, spin: (theta * Math.PI) / 180, key: `crank.${bank}` },
+      ...ch.cams.map((c, i) => ({ c, r: CAM_R, n: 36, spin: (theta * Math.PI) / 360, key: `${bank}.${["intake", "exhaust"][i]}` })),
+    ];
+    for (const sp of sprockets) {
+      const gear = gearPoly(sp.c, sp.r, sp.n, sp.spin, 5.5);
+      add(`gear.${bank}.${sp.key}`, prism(FX, gear, ch.x - 5, ch.x + 5), "sprocket");
+      // lightening holes and spokes on the gear face
+      for (let k = 0; k < 5; k++) {
+        const a = sp.spin + (k / 5) * Math.PI * 2 + 0.35;
+        const ca = Math.cos(a), sa = Math.sin(a);
+        chainDots.push({ p: [ch.x + 5.4, sp.c[0] + ca * sp.r * 0.56, sp.c[1] + sa * sp.r * 0.56], r: Math.max(3, sp.r * 0.11), color: [12, 15, 20], alpha: 0.8 });
+        wires.push({ kind: "wirePath", points: [[ch.x + 5.5, sp.c[0] + ca * 12, sp.c[1] + sa * 12], [ch.x + 5.5, sp.c[0] + ca * (sp.r - 8), sp.c[1] + sa * (sp.r - 8)]], color: [235, 224, 192], width: 0.7, alpha: 0.3 });
+      }
+      // the index tooth stays bright, so the 2:1 ratio reads
+      const ia = sp.spin;
+      wires.push({ kind: "wirePath", points: [[ch.x + 5.6, sp.c[0] + Math.cos(ia) * (sp.r + 2), sp.c[1] + Math.sin(ia) * (sp.r + 2)], [ch.x + 5.6, sp.c[0] + Math.cos(ia) * (sp.r + 8.5), sp.c[1] + Math.sin(ia) * (sp.r + 8.5)]], color: [255, 228, 155], width: 2.0, alpha: 0.95 });
+    }
+    // chain rollers and link plates
+    const count = Math.max(8, Math.floor(ch.total / CHAIN_PITCH));
+    const step = ch.total / count;
+    for (let k = 0; k < count; k++) {
+      const s = phase + k * step;
+      const [y, z] = ch.at(s);
+      const tint = k % 3 === 0 ? [186, 194, 210] : [212, 220, 236];
+      chainDots.push({ p: [ch.x + 5.5, y, z], r: 1.8, color: tint, alpha: k % 3 === 0 ? 0.8 : 0.95 });
+      const [y2, z2] = ch.at(s + step);
+      const tx = y2 - y, tz = z2 - z;
+      const len = Math.hypot(tx, tz) || 1;
+      const ux = tx / len, uz = tz / len;
+      const nx = -uz, nz = ux;
+      const ext = 2.0, halfW = 3.4;
+      const outer = k % 2 === 0;
+      const plate = [
+        [y - ux * ext + nx * halfW, z - uz * ext + nz * halfW],
+        [y + ux * (len + ext) + nx * halfW, z + uz * (len + ext) + nz * halfW],
+        [y + ux * (len + ext) - nx * halfW, z + uz * (len + ext) - nz * halfW],
+        [y - ux * ext - nx * halfW, z - uz * ext - nz * halfW],
+      ];
+      chainPlates.push({
+        pts: plate.map(([py, pz]) => [ch.x + 5.5 + (outer ? 1.5 : -1.5), py, pz]),
+        fill: outer ? [128, 138, 154] : [102, 112, 128],
+        alpha: outer ? 1 : 0.96,
+        edge: [196, 206, 222],
+      });
+    }
+    for (let m = 0; m < 4; m++) {
+      const [my, mz] = ch.at(phase + (m * ch.total) / 4);
+      chainDots.push({ p: [ch.x + 5.5, my, mz], r: 3.4, color: [255, 214, 130], alpha: 0.95 });
+    }
+  }
+  return { parts, wires, chainDots, chainPlates };
+}
+
+function rodMesh(A, B) {
+  // A beam of rectangular section plus a little taper, from A to B.
+  const m = mesh();
+  const d = unit(sub(B, A));
+  const w = unit(cross(d, [1, 0, 0]));
+  const t = [1, 0, 0];
+  const corners = (P, halfW, halfT) => [
+    [P[0] + w[0] * halfW + t[0] * halfT, P[1] + w[1] * halfW + t[1] * halfT, P[2] + w[2] * halfW + t[2] * halfT],
+    [P[0] - w[0] * halfW + t[0] * halfT, P[1] - w[1] * halfW + t[1] * halfT, P[2] - w[2] * halfW + t[2] * halfT],
+    [P[0] - w[0] * halfW - t[0] * halfT, P[1] - w[1] * halfW - t[1] * halfT, P[2] - w[2] * halfW - t[2] * halfT],
+    [P[0] + w[0] * halfW - t[0] * halfT, P[1] + w[1] * halfW - t[1] * halfT, P[2] + w[2] * halfW - t[2] * halfT],
+  ];
+  const a = corners(A, 20, 8).map((p) => addV(m, p));
+  const b = corners(B, 14, 6).map((p) => addV(m, p));
+  m.f.push(a, b);
+  for (let i = 0; i < 4; i++) m.f.push([a[i], a[(i + 1) % 4], b[(i + 1) % 4], b[i]]);
+  orient(m);
+  return m;
+}
+
+// ---------------- callout anchors ----------------
+// Tags are fixed in the engine's 3D space but placed near their parts: the
+// side comes from the part's default screen x, and the label's height matches
+// the part's default screen y. The label columns stay outside the block, so a
+// leader crosses only the near half of the engine instead of the whole model.
+function rawTags(theta) {
+  const out = [];
+  const cyl1 = V8.CYL.find((c) => c.n === 1);
+  const cyc1 = V8.cycle(cyl1, theta);
+  const stroke = V8.strokeOf(cyc1);
+  const stages = { power: "POWER STROKE", exhaust: "EXHAUST STROKE", intake: "INTAKE STROKE", compression: "COMPRESSION STROKE" };
+  const ch1 = chamber(cyl1, theta);
+  const stageP = [(ch1.p0[0] + ch1.p1[0]) / 2, (ch1.p0[1] + ch1.p1[1]) / 2, (ch1.p0[2] + ch1.p1[2]) / 2];
+  out.push({
+    key: "stage1", kicker: "CYLINDER 1", text: stages[stroke], p: stageP, priority: 1,
+    color: gasState(cyl1, theta).color,
+  });
+  const f1 = FUEL.find((f) => f.n === 1);
+  const sprayOn = cyc1 > 372 && cyc1 < 448;
+  const sprayP = sprayOn
+    ? [(f1.nozzle[0] + f1.target[0]) / 2, (f1.nozzle[1] + f1.target[1]) / 2, (f1.nozzle[2] + f1.target[2]) / 2]
+    : f1.nozzle.slice();
+  out.push({
+    key: "spray1", kicker: "CYLINDER 1", text: sprayOn ? "SPRAY · ON" : "SPRAY · OFF", p: sprayP, priority: 1,
+    on: sprayOn, color: sprayOn ? [255, 196, 90] : [140, 152, 166],
+  });
+  return out;
+}
+
+let TAG_LABEL_POINTS = null;
+function ensureLabelPoints() {
+  if (TAG_LABEL_POINTS) return TAG_LABEL_POINTS;
+  const A = 28 * Math.PI / 180, E = 23 * Math.PI / 180;
+  const R = [Math.sin(A), -Math.cos(A), 0];
+  const U = [-Math.cos(A) * Math.sin(E), -Math.sin(A) * Math.sin(E), Math.cos(E)];
+  const F = [Math.cos(A) * Math.cos(E), Math.sin(A) * Math.cos(E), Math.sin(E)];
+  const C = [-42, 0, 96];
+  const WING = 520;
+  const groups = { L: [], R: [] };
+  for (const t of rawTags(0)) {
+    const key = t.key || t.text;
+    const rel = [t.p[0] - C[0], t.p[1] - C[1], t.p[2] - C[2]];
+    const x = dot(R, rel), y = dot(U, rel);
+    (x < 0 ? groups.L : groups.R).push({ key, t, y });
+  }
+  const map = new Map();
+  for (const side of ["L", "R"]) {
+    const list = groups[side].sort((a, b) => b.y - a.y);
+    let prev = Infinity;
+    list.forEach((g, i) => {
+      const gap = g.t.key ? 64 : 46;
+      const v = Math.min(g.y, prev - gap);
+      prev = v;
+      const u = side === "L" ? -WING : WING;
+      const d = ((i * 83 + (side === "L" ? -110 : 110)) % 380) - 190;
+      map.set(g.key, [
+        C[0] + R[0] * u + U[0] * v + F[0] * d,
+        C[1] + R[1] * u + U[1] * v + F[1] * d,
+        C[2] + R[2] * u + U[2] * v + F[2] * d,
+      ]);
+    });
+  }
+  TAG_LABEL_POINTS = map;
+  return map;
+}
+
+function tagAnchors(theta) {
+  const map = ensureLabelPoints();
+  return rawTags(theta).map((t) => ({ ...t, l: map.get(t.key || t.text) || t.p }));
+}
+
+// ---------------- gas and flow ----------------
+const GAS = {
+  blue: [58, 160, 255],
+  yellow: [255, 208, 64],
+  red: [255, 54, 38],
+  orange: [255, 138, 44],
+};
+const lerpC = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+
+function gasState(cyl, theta) {
+  const cyc = V8.cycle(cyl, theta);
+  const liftI = V8.liftAt(cyl, "intake", theta);
+  const liftE = V8.liftAt(cyl, "exhaust", theta);
+  let color, alpha, phase;
+  if (cyc < 180) {
+    // power: red -> orange
+    const t = cyc / 180;
+    color = lerpC(GAS.red, GAS.orange, t);
+    alpha = 0.55 - 0.18 * t;
+    phase = "power";
+  } else if (cyc < 345) {
+    // exhaust: orange, thinning out
+    const t = (cyc - 180) / 180;
+    color = GAS.orange;
+    alpha = 0.38 * (1 - t * 0.75);
+    phase = "exhaust";
+  } else if (cyc < 375) {
+    // valve overlap: the last orange leaves while the first blue arrives
+    const t = (cyc - 345) / 30;
+    const e = t * t * (3 - 2 * t);
+    color = lerpC(GAS.orange, GAS.blue, e);
+    alpha = 0.13 + 0.04 * e;
+    phase = "overlap";
+  } else if (cyc < 540) {
+    // intake: blue fills
+    const t = (cyc - 360) / 180;
+    color = GAS.blue;
+    alpha = 0.16 + 0.2 * t;
+    phase = "intake";
+  } else {
+    // compression: blue -> yellow, denser
+    const t = (cyc - 540) / 180;
+    color = lerpC(GAS.blue, GAS.yellow, t);
+    alpha = 0.3 + 0.28 * t;
+    phase = "compression";
+  }
+  return { cyc, color, alpha, phase, liftI, liftE };
+}
+
+function chamber(cyl, theta) {
+  const u = V8.BANK[cyl.bank].ax;
+  const crown = V8.crownS(cyl, theta);
+  const top = 252;
+  const o = [cyl.x, 0, 0];
+  const p0 = [o[0] + u[0] * crown, o[1] + u[1] * crown, o[2] + u[2] * crown];
+  const p1 = [o[0] + u[0] * top, o[1] + u[1] * top, o[2] + u[2] * top];
+  return { p0, p1, axis: u, r: 45 };
+}
+
+function flowPaths() {
+  const out = [];
+  for (const cyl of V8.CYL) {
+    const b = V8.BANK[cyl.bank];
+    const p0 = bankPoint(cyl.bank, 282, -84);
+    const n = [-b.out[1], -b.out[2]];
+    const axis = unit([0, n[0] * 0.45, n[1] * 0.45 + 1]);
+    const base = [cyl.x, p0[0] + n[0] * 28, p0[1] + n[1] * 28];
+    const mouth = [base[0] + axis[0] * 75, base[1] + axis[1] * 75, base[2] + axis[2] * 75];
+    const port = [cyl.x, p0[0] + n[0] * 2, p0[1] + n[1] * 2];
+    const seat = V8.valveSeat(cyl, "intake");
+    const into = [cyl.x, seat[0] - 12, seat[1]];
+    out.push({ type: "intake", cyl: cyl.n, points: [mouth, base, port, [cyl.x, seat[0], seat[1]], into] });
+
+    const pe = bankPoint(cyl.bank, 296, 84);
+    const logC = bankPoint(cyl.bank, 244, 162);
+    const seatE = V8.valveSeat(cyl, "exhaust");
+    out.push({ type: "exhaust", cyl: cyl.n, points: [[cyl.x, seatE[0], seatE[1]], [cyl.x, pe[0], pe[1]], [cyl.x, logC[0], logC[1]], [REAR + 26, logC[0], logC[1]]] });
+  }
+  return out;
+}
+
+// viewer3d.js — canvas renderer and controls for the x-ray V8.
+(() => {
+  const stage = document.getElementById("stage");
+  const canvas = document.getElementById("view");
+  const ctx = canvas.getContext("2d");
+  const readout = document.querySelector("[data-readout]");
+  const playBtn = document.getElementById("play");
+  const playLabel = document.getElementById("playLabel");
+  const dashNeedle = document.getElementById("dashNeedle");
+  const dashRpm = document.getElementById("dashRpm");
+  const pedal = document.getElementById("pedal");
+  const pedalBlade = document.getElementById("pedalBlade");
+  const pedalAngleText = document.querySelector("[data-pedal-angle]");
+  const soundBtn = document.getElementById("sound");
+  const chips = [...document.querySelectorAll("[data-chip]")];
+  const still = matchMedia("(prefers-reduced-motion: reduce)");
+  const syncPlay = () => {
+    playBtn.dataset.playing = String(playing);
+    playBtn.setAttribute("aria-label", playing ? "Pause animation" : "Run animation");
+    if (playLabel) playLabel.textContent = playing ? "Pause" : "Run";
+  };
+
+  const DEG = Math.PI / 180;
+  const STATIC = buildStatic();
+  const FLOWS = flowPaths();
+  const edgesCache = new WeakMap();
+  const faceCache = new WeakMap();
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const IDLE_RPM = 10, MAX_RPM = 600, PEDAL_MAX = 70;
+
+  let yaw = 28 * DEG, pitch = 23 * DEG, zoom = 1.0;
+  let camAnim = null;
+  const viewTargets = {
+    front: { yaw: 28 * DEG, pitch: 23 * DEG, zoom: 1.0 },
+    rear: { yaw: 152 * DEG, pitch: 16 * DEG, zoom: 0.95 },
+    top: { yaw: 26 * DEG, pitch: 82 * DEG, zoom: 0.95 },
+  };
+  const goTo = (name) => {
+    const target = viewTargets[name];
+    if (!target) return;
+    camAnim = { y0: yaw, p0: pitch, z0: zoom, y1: target.yaw, p1: target.pitch, z1: target.zoom, t: 0 };
+    idleAt = performance.now() + 12000;
+  };
+  let theta = 0;
+  let rpm = IDLE_RPM;
+  let pedalAngle = PEDAL_MAX;
+  let soundOn = true;
+  let playing = !still.matches;
+  let last = 0;
+  let idleAt = performance.now() + 12000;
+  let w = 0, h = 0, dpr = 1;
+  const particles = [];
+
+  // ---------------- camera ----------------
+  const camera = () => {
+    const sa = Math.sin(yaw), ca = Math.cos(yaw);
+    const se = Math.sin(pitch), ce = Math.cos(pitch);
+    return {
+      R: [sa, -ca, 0],
+      U: [-ca * se, -sa * se, ce],
+      F: [ca * ce, sa * ce, se],
+    };
+  };
+  const dot = (a, p) => a[0] * p[0] + a[1] * p[1] + a[2] * p[2];
+  const C = [-42, 0, 82];
+  const BB = [
+    [-372, -340, -185], [235, -340, -185], [-372, 340, -185], [235, 340, -185],
+    [-372, -340, 380], [235, -340, 380], [-372, 340, 380], [235, 340, 380],
+  ];
+  let view = { cam: null, s: 1, ox: 0, oy: 0 };
+  function fit() {
+    const cam = camera();
+    let minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9;
+    for (const p of BB) {
+      const q = [p[0] - C[0], p[1] - C[1], p[2] - C[2]];
+      const x = dot(cam.R, q), y = -dot(cam.U, q);
+      minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+      minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+    }
+    const compact = w < 900;
+    if (!compact) {
+      for (const t of tagAnchors(0)) {
+        const p = t.l;
+        const q = [p[0] - C[0], p[1] - C[1], p[2] - C[2]];
+        const x = dot(cam.R, q), y = -dot(cam.U, q);
+        minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+        minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+      }
+    }
+    const padX = compact ? 0 : 82, padY = compact ? 0 : 26;
+    const s = Math.min((w * (compact ? 0.94 : 0.98) - padX * 2) / (maxX - minX), (h * (compact ? 0.9 : 0.94) - padY * 2) / (maxY - minY)) * zoom;
+    view = { cam, s, ox: w / 2 - ((minX + maxX) / 2) * s, oy: h / 2 - ((minY + maxY) / 2) * s };
+  }
+  const proj = (p) => {
+    const q = [p[0] - C[0], p[1] - C[1], p[2] - C[2]];
+    return [view.ox + dot(view.cam.R, q) * view.s, view.oy - dot(view.cam.U, q) * view.s, dot(view.cam.F, q)];
+  };
+
+  // ---------------- mesh edges ----------------
+  function edgesOf(mesh) {
+    let e = edgesCache.get(mesh);
+    if (e) return e;
+    e = new Map();
+    mesh.f.forEach((face, fi) => {
+      for (let i = 0; i < face.length; i++) {
+        const a = face[i], b = face[(i + 1) % face.length];
+        const k = a < b ? `${a}|${b}` : `${b}|${a}`;
+        if (!e.has(k)) e.set(k, { a, b, faces: [] });
+        e.get(k).faces.push(fi);
+      }
+    });
+    e = [...e.values()];
+    edgesCache.set(mesh, e);
+    return e;
+  }
+  const normalOf = (mesh, face) => {
+    const [ia, ib, ic] = face;
+    const A = mesh.v[ia], B = mesh.v[ib], Cc = mesh.v[ic];
+    const u = [B[0] - A[0], B[1] - A[1], B[2] - A[2]];
+    const v = [Cc[0] - A[0], Cc[1] - A[1], Cc[2] - A[2]];
+    const n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
+    const l = Math.hypot(n[0], n[1], n[2]) || 1;
+    return [n[0] / l, n[1] / l, n[2] / l];
+  };
+
+  // ---------------- frame ----------------
+  const LIGHT = (() => { const l = [-0.38, -0.58, 0.72]; const n = Math.hypot(...l); return l.map((x) => x / n); })();
+  function drawPart(part) {
+    const mesh = part.mesh;
+    const mat = MAT[part.mat];
+    const cam = view.cam;
+    const s = view.s;
+    const faces = [];
+    const normals = mesh.f.map((face) => normalOf(mesh, face));
+    const vis = normals.map((n) => dot(n, cam.F) > 0);
+    for (let i = 0; i < mesh.f.length; i++) {
+      if (!vis[i]) continue;
+      const face = mesh.f[i];
+      let depth = 0;
+      const pts = [];
+      for (const idx of face) {
+        const q = proj(mesh.v[idx]);
+        pts.push(q);
+        depth += q[2];
+      }
+      depth /= face.length;
+      const n = normals[i];
+      const nc = [dot(n, cam.R), dot(n, cam.U), dot(n, cam.F)];
+      const lam = Math.max(0, nc[0] * LIGHT[0] + nc[1] * LIGHT[1] + nc[2] * LIGHT[2]);
+      const shade = 0.3 + 0.7 * lam;
+      const c = mat.fill;
+      const r = Math.round(c[0] * shade), g = Math.round(c[1] * shade), b = Math.round(c[2] * shade);
+      faces.push({ pts, depth, fill: `rgba(${r},${g},${b},${mat.alpha})` });
+    }
+    const edgeBuckets = { sil: [], crease: [], hidden: [] };
+    for (const e of edgesOf(mesh)) {
+      const v0 = vis[e.faces[0]];
+      const v1 = e.faces.length > 1 ? vis[e.faces[1]] : false;
+      let kind;
+      if (v0 && v1) {
+        const n0 = normals[e.faces[0]], n1 = normals[e.faces[1]];
+        const d = n0[0] * n1[0] + n0[1] * n1[1] + n0[2] * n1[2];
+        const hard = ["steel", "steel2", "crank", "rod", "piston", "valve", "cam"].includes(part.mat);
+        if (d > (hard ? 0.62 : 0.93)) continue;
+        kind = "crease";
+      } else if (v0 || v1) kind = "sil";
+      else kind = "hidden";
+      const a = proj(mesh.v[e.a]), b = proj(mesh.v[e.b]);
+      edgeBuckets[kind].push([a[0], a[1], b[0], b[1]]);
+    }
+    return { faces, edgeBuckets, mat };
+  }
+
+  function buildFrame(theta) {
+    const dyn = buildDynamic(theta);
+    const draws = [];
+    const edges = { sil: new Map(), crease: new Map(), hidden: new Map() };
+    for (const part of [...STATIC.parts, ...dyn.parts]) {
+      const r = drawPart(part);
+      draws.push(...r.faces);
+      const ec = `rgba(${r.mat.edge[0]},${r.mat.edge[1]},${r.mat.edge[2]},`;
+      for (const kind of ["sil", "crease", "hidden"]) {
+        const key = `${ec}${(r.mat.edgeAlpha * (kind === "sil" ? 1 : kind === "crease" ? 0.4 : 0.1)).toFixed(2)})|${kind}`;
+        if (!edges[kind].has(key)) edges[kind].set(key, []);
+        edges[kind].get(key).push(...r.edgeBuckets[kind]);
+      }
+    }
+    // gas capsules
+    for (const cyl of V8.CYL) {
+      const g = gasState(cyl, theta);
+      const ch = chamber(cyl, theta);
+      const a = proj(ch.p0), b = proj(ch.p1);
+      const r = ch.r * view.s;
+      // hull of the two end circles
+      const pts = [];
+      for (let k = 0; k < 20; k++) {
+        const ang = (k / 20) * Math.PI * 2;
+        const ca = Math.cos(ang) * ch.r, sa = Math.sin(ang) * ch.r;
+        const u = V8.BANK[cyl.bank].out;
+        const wv = [0, -u[2], u[1]];
+        pts.push(proj([ch.p0[0] + u[0] * ca + wv[0] * sa, ch.p0[1] + u[1] * ca + wv[1] * sa, ch.p0[2] + u[2] * ca + wv[2] * sa]));
+        pts.push(proj([ch.p1[0] + u[0] * ca + wv[0] * sa, ch.p1[1] + u[1] * ca + wv[1] * sa, ch.p1[2] + u[2] * ca + wv[2] * sa]));
+      }
+      const hull = hull2(pts.map((p) => [p[0], p[1]]));
+      const depth = (a[2] + b[2]) / 2;
+      const col = g.color;
+      draws.push({
+        gas: true, hull, a, b, r, depth, alpha: g.alpha, color: col, phase: g.phase, n: cyl.n,
+        draw(ctx) {
+          if (this.hull.length < 3) return;
+          const gr = ctx.createLinearGradient(this.a[0], this.a[1], this.b[0], this.b[1]);
+          const c = this.color;
+          gr.addColorStop(0, `rgba(${c[0] * 0.75 | 0},${c[1] * 0.75 | 0},${c[2] * 0.75 | 0},${this.alpha})`);
+          gr.addColorStop(0.5, `rgba(${c[0]},${c[1]},${c[2]},${this.alpha})`);
+          gr.addColorStop(1, `rgba(${Math.min(255, c[0] * 1.12) | 0},${Math.min(255, c[1] * 1.12) | 0},${Math.min(255, c[2] * 1.12) | 0},${this.alpha * 1.15})`);
+          ctx.beginPath();
+          ctx.moveTo(this.hull[0][0], this.hull[0][1]);
+          for (let i = 1; i < this.hull.length; i++) ctx.lineTo(this.hull[i][0], this.hull[i][1]);
+          ctx.closePath();
+          ctx.fillStyle = gr;
+          ctx.fill();
+          ctx.strokeStyle = `rgba(${c[0]},${c[1]},${c[2]},0.45)`;
+          ctx.lineWidth = 0.8;
+          ctx.stroke();
+          // a soft core along the gas
+          const cx = (this.a[0] + this.b[0]) / 2, cy = (this.a[1] + this.b[1]) / 2;
+          const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(18, this.r * 1.1));
+          glow.addColorStop(0, `rgba(${c[0]},${c[1]},${c[2]},${this.alpha * 0.5})`);
+          glow.addColorStop(1, `rgba(${c[0]},${c[1]},${c[2]},0)`);
+          ctx.globalCompositeOperation = "lighter";
+          ctx.fillStyle = glow;
+          ctx.beginPath(); ctx.arc(cx, cy, Math.max(18, this.r * 1.1), 0, Math.PI * 2); ctx.fill();
+          ctx.globalCompositeOperation = "source-over";
+        },
+      });
+    }
+    return { draws, edges, dyn };
+  }
+
+  // ---------------- render ----------------
+  function drawBoreWire(w) {
+    const cam = view.cam;
+    const a = w.axis;
+    const u = Math.abs(a[2]) > 0.9 ? [1, 0, 0] : [0, 0, 1];
+    let uu = [u[1] * a[2] - u[2] * a[1], u[2] * a[0] - u[0] * a[2], u[0] * a[1] - u[1] * a[0]];
+    const ul = Math.hypot(...uu); uu = uu.map((v) => v / ul);
+    const vv = [a[1] * uu[2] - a[2] * uu[1], a[2] * uu[0] - a[0] * uu[2], a[0] * uu[1] - a[1] * uu[0]];
+    // faint glass casing
+    const hull = [];
+    for (let k = 0; k < 24; k++) {
+      const ang = (k / 24) * Math.PI * 2;
+      const p = [w.o[0] + a[0] * w.s0 + w.r * (Math.cos(ang) * uu[0] + Math.sin(ang) * vv[0]), w.o[1] + a[1] * w.s0 + w.r * (Math.cos(ang) * uu[1] + Math.sin(ang) * vv[1]), w.o[2] + a[2] * w.s0 + w.r * (Math.cos(ang) * uu[2] + Math.sin(ang) * vv[2])];
+      hull.push(proj(p));
+      const q = [w.o[0] + a[0] * w.s1 + w.r * (Math.cos(ang) * uu[0] + Math.sin(ang) * vv[0]), w.o[1] + a[1] * w.s1 + w.r * (Math.cos(ang) * uu[1] + Math.sin(ang) * vv[1]), w.o[2] + a[2] * w.s1 + w.r * (Math.cos(ang) * uu[2] + Math.sin(ang) * vv[2])];
+      hull.push(proj(q));
+    }
+    const bh = hull2(hull.map((p) => [p[0], p[1]]));
+    ctx.beginPath();
+    ctx.moveTo(bh[0][0], bh[0][1]);
+    for (let i = 1; i < bh.length; i++) ctx.lineTo(bh[i][0], bh[i][1]);
+    ctx.closePath();
+    ctx.fillStyle = "rgba(190,225,255,0.025)";
+    ctx.fill();
+    // only a deck rim and faint side generators: the solid piston carries the eye
+    ctx.strokeStyle = "rgba(238,248,255,0.32)";
+    ctx.lineWidth = 0.8;
+    for (const [s, r] of [[w.s1, w.r + 2.2]]) {
+      ctx.beginPath();
+      for (let k = 0; k <= 48; k++) {
+        const ang = (k / 48) * Math.PI * 2;
+        const p = [w.o[0] + a[0] * s + r * (Math.cos(ang) * uu[0] + Math.sin(ang) * vv[0]), w.o[1] + a[1] * s + r * (Math.cos(ang) * uu[1] + Math.sin(ang) * vv[1]), w.o[2] + a[2] * s + r * (Math.cos(ang) * uu[2] + Math.sin(ang) * vv[2])];
+        const q = proj(p);
+        k ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]);
+      }
+      ctx.stroke();
+    }
+    // silhouette generators
+    const du = dot(uu, cam.F), dv = dot(vv, cam.F);
+    const th = Math.atan2(-du, dv);
+    for (const ang of [th, th + Math.PI]) {
+      const p0 = [w.o[0] + a[0] * w.s0 + w.r * (Math.cos(ang) * uu[0] + Math.sin(ang) * vv[0]), w.o[1] + a[1] * w.s0 + w.r * (Math.cos(ang) * uu[1] + Math.sin(ang) * vv[1]), w.o[2] + a[2] * w.s0 + w.r * (Math.cos(ang) * uu[2] + Math.sin(ang) * vv[2])];
+      const p1 = [w.o[0] + a[0] * w.s1 + w.r * (Math.cos(ang) * uu[0] + Math.sin(ang) * vv[0]), w.o[1] + a[1] * w.s1 + w.r * (Math.cos(ang) * uu[1] + Math.sin(ang) * vv[1]), w.o[2] + a[2] * w.s1 + w.r * (Math.cos(ang) * uu[2] + Math.sin(ang) * vv[2])];
+      const q0 = proj(p0), q1 = proj(p1);
+      ctx.beginPath(); ctx.moveTo(q0[0], q0[1]); ctx.lineTo(q1[0], q1[1]); ctx.stroke();
+    }
+  }
+
+  // ---------------- volumetric intake / exhaust flow ----------------
+  const unit3 = (a) => { const l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
+  const cross3 = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  function densify(points, parts = 4) {
+    const out = [];
+    for (let i = 0; i < points.length - 1; i++) {
+      for (let j = 0; j < parts; j++) {
+        const t = j / parts;
+        out.push([0, 1, 2].map((k) => points[i][k] + (points[i + 1][k] - points[i][k]) * t));
+      }
+    }
+    out.push(points[points.length - 1]);
+    return out;
+  }
+  function normalPair(t) {
+    const up = Math.abs(t[2]) > 0.9 ? [1, 0, 0] : [0, 0, 1];
+    const a = unit3(cross3(t, up));
+    const b = unit3(cross3(t, a));
+    return [a, b];
+  }
+  function drawFlows(deg, now) {
+    const time = now / 1000;
+    const active = [];
+    for (const fl of FLOWS) {
+      const cyl = V8.CYL.find((c) => c.n === fl.cyl);
+      const lift = V8.liftAt(cyl, fl.type, deg);
+      const strength = clamp(lift / 7.5, 0, 1);
+      if (strength < 0.03) continue;
+      active.push({ fl, cyl, strength });
+    }
+    if (!active.length) return;
+    ctx.save();
+    ctx.globalCompositeOperation = "source-over";
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+    for (const { fl, cyl, strength } of active) {
+      const blue = fl.type === "intake";
+      const col = blue ? [82, 178, 255] : [255, 152, 64];
+      const pts3 = densify(fl.points, 5);
+      const screen = pts3.map((p) => proj(p));
+      const tangents = pts3.map((p, i) => {
+        const a = pts3[Math.max(0, i - 1)], b = pts3[Math.min(pts3.length - 1, i + 1)];
+        return unit3([b[0] - a[0], b[1] - a[1], b[2] - a[2]]);
+      });
+      // a volumetric ribbon: wide at the open end, narrow at the valve
+      const wide = fl.type === "intake" ? 19 : 8;
+      const narrow = fl.type === "intake" ? 7 : 16;
+      const leftEdge = [], rightEdge = [];
+      screen.forEach((p, i) => {
+        const q = screen[Math.min(screen.length - 1, i + 1)];
+        const r = screen[Math.max(0, i - 1)];
+        let tx = q[0] - r[0], ty = q[1] - r[1];
+        const len = Math.hypot(tx, ty) || 1;
+        tx /= len; ty /= len;
+        const w = (wide + (narrow - wide) * (i / (screen.length - 1))) * Math.max(0.35, strength);
+        leftEdge.push([p[0] - ty * w, p[1] + tx * w]);
+        rightEdge.push([p[0] + ty * w, p[1] - tx * w]);
+      });
+      const gr = ctx.createLinearGradient(screen[0][0], screen[0][1], screen[screen.length - 1][0], screen[screen.length - 1][1]);
+      const a0 = 0.45 * strength, a1 = 0.16 * strength;
+      gr.addColorStop(0, `rgba(${col.join(",")},${a0})`);
+      gr.addColorStop(0.55, `rgba(${col.join(",")},${a0 * 0.85})`);
+      gr.addColorStop(1, `rgba(${col.join(",")},${a1})`);
+      ctx.beginPath();
+      leftEdge.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])));
+      for (let i = rightEdge.length - 1; i >= 0; i--) ctx.lineTo(rightEdge[i][0], rightEdge[i][1]);
+      ctx.closePath();
+      ctx.fillStyle = gr;
+      ctx.fill();
+      // bright core and a halo
+      ctx.globalCompositeOperation = "lighter";
+      for (const [width, alpha] of [[12, 0.05], [6, 0.09], [2.6, 0.2], [1.0, 0.42]]) {
+        ctx.strokeStyle = `rgba(${col.join(",")},${alpha * strength})`;
+        ctx.lineWidth = width;
+        ctx.beginPath();
+        screen.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])));
+        ctx.stroke();
+      }
+      // three swirling filaments, each a real offset path around the core
+      for (let j = 0; j < 3; j++) {
+        const phase = j * 2.1 + cyl.n * 0.7 + time * (blue ? 1.6 : 1.2);
+        ctx.strokeStyle = `rgba(${col.map((c) => Math.min(255, c * (1.05 + j * 0.06)) | 0).join(",")},${(0.34 - j * 0.06) * strength})`;
+        ctx.lineWidth = 3.0 - j * 0.55;
+        ctx.beginPath();
+        pts3.forEach((p, i) => {
+          const [a, b] = normalPair(tangents[i]);
+          const off = 5.5;
+          const dx = Math.sin(phase + i * 0.7 + j) * off;
+          const dy = Math.cos(phase * 0.8 + i * 0.5 + j) * off * 0.8;
+          const q = proj([p[0] + a[0] * dx + b[0] * dy, p[1] + a[1] * dx + b[1] * dy, p[2] + a[2] * dx + b[2] * dy]);
+          i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]);
+        });
+        ctx.stroke();
+      }
+      // moving dashes show direction
+      ctx.setLineDash([5, 10]);
+      ctx.lineDashOffset = -(time * (34 + rpm * 0.4) + cyl.n * 9);
+      ctx.strokeStyle = `rgba(${col.join(",")},${0.42 * strength})`;
+      ctx.lineWidth = 1.7;
+      ctx.beginPath();
+      screen.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])));
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // a glow at the valve seat where the charge is crossing
+      const vp = proj(blue ? pts3[pts3.length - 2] : pts3[1]);
+      const vg = ctx.createRadialGradient(vp[0], vp[1], 0, vp[0], vp[1], 22 * view.s);
+      vg.addColorStop(0, `rgba(${col.join(",")},${0.3 * strength})`);
+      vg.addColorStop(1, `rgba(${col.join(",")},0)`);
+      ctx.fillStyle = vg;
+      ctx.beginPath(); ctx.arc(vp[0], vp[1], 22 * view.s, 0, Math.PI * 2); ctx.fill();
+      // puffs at the open end: mist at the stack mouth, smoke at the exhaust outlet
+      const atStart = blue;
+      const base = atStart ? pts3[0] : pts3[pts3.length - 1];
+      const dir = atStart ? tangents[0] : tangents[tangents.length - 1];
+      const drift = blue ? -1 : 1;
+      for (let i = 0; i < (blue ? 4 : 7); i++) {
+        const ph = (time * (blue ? 0.7 : 0.55) + i / (blue ? 4 : 7) + cyl.n * 0.17) % 1;
+        const radius = (blue ? 8 + ph * 14 : 12 + ph * 46) * view.s;
+        const p = proj([
+          base[0] + dir[0] * drift * ph * (blue ? 12 : 46),
+          base[1] + dir[1] * drift * ph * (blue ? 12 : 46),
+          base[2] + dir[2] * drift * ph * (blue ? 12 : 46),
+        ]);
+        const g = ctx.createRadialGradient(p[0], p[1], 0, p[0], p[1], Math.max(5, radius));
+        const a = (1 - ph) * (blue ? 0.22 : 0.3) * strength;
+        g.addColorStop(0, `rgba(${col.join(",")},${a})`);
+        g.addColorStop(1, `rgba(${col.join(",")},0)`);
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(p[0], p[1], Math.max(4, radius), 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+
+  // ---------------- petrol injection spray ----------------
+  const fuelDrops = [];
+  const fuelAcc = new Map();
+  const SUB = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+  const DOT = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  function drawFuel(deg, dt, now) {
+    const time = now / 1000;
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    for (const f of STATIC.fuel) {
+      const cyl = V8.CYL.find((c) => c.n === f.n);
+      const cyc = V8.cycle(cyl, deg);
+      let inten = 0;
+      if (cyc > 372 && cyc < 448) {
+        const t = (cyc - 372) / 76;
+        inten = Math.sin(Math.PI * t);
+      }
+      inten *= clamp(V8.liftAt(cyl, "intake", deg) / 2.5, 0, 1);
+      if (inten < 0.04) continue;
+      const a = proj(f.nozzle), b = proj(f.target);
+      const dx = b[0] - a[0], dy = b[1] - a[1];
+      const len = Math.hypot(dx, dy) || 1;
+      const nx = -dy / len, ny = dx / len;
+      const wt = 14 * view.s * (0.55 + 0.45 * inten);
+      for (const k of [-0.7, 0, 0.7]) {
+        const gr = ctx.createLinearGradient(a[0], a[1], b[0], b[1]);
+        gr.addColorStop(0, `rgba(255,204,96,${0.12 * inten})`);
+        gr.addColorStop(0.55, `rgba(250,178,64,${0.06 * inten})`);
+        gr.addColorStop(1, "rgba(255,170,60,0)");
+        ctx.fillStyle = gr;
+        ctx.beginPath();
+        ctx.moveTo(a[0] + nx * k * 2, a[1] + ny * k * 2);
+        ctx.lineTo(b[0] + nx * (k * 0.5 + 1) * wt, b[1] + ny * (k * 0.5 + 1) * wt);
+        ctx.lineTo(b[0] + nx * (k * 0.5 - 1) * wt, b[1] + ny * (k * 0.5 - 1) * wt);
+        ctx.closePath();
+        ctx.fill();
+      }
+      // atomising mist at the nozzle
+      const ng = ctx.createRadialGradient(a[0], a[1], 0, a[0], a[1], 7 * view.s);
+      ng.addColorStop(0, `rgba(255,208,120,${0.3 * inten})`);
+      ng.addColorStop(1, "rgba(255,180,70,0)");
+      ctx.fillStyle = ng;
+      ctx.beginPath(); ctx.arc(a[0], a[1], 7 * view.s, 0, Math.PI * 2); ctx.fill();
+      if (dt > 0) {
+        const acc = (fuelAcc.get(f.n) ?? 0) + dt * 150 * inten;
+        const k = Math.floor(acc);
+        fuelAcc.set(f.n, acc - k);
+        for (let i = 0; i < k && fuelDrops.length < 360; i++) {
+          fuelDrops.push({ f, t: 0, speed: 1.4 + Math.random() * 1.3, angle: Math.random() * Math.PI * 2, amp: 0.7 + Math.random() * 1.3, size: 1.1 + Math.random() * 1.8 });
+        }
+      }
+    }
+    const d0 = [0, 0, 0];
+    for (let i = fuelDrops.length - 1; i >= 0; i--) {
+      const d = fuelDrops[i];
+      d.t += dt * d.speed;
+      if (d.t >= 1) { fuelDrops.splice(i, 1); continue; }
+      const A = d.f.nozzle, B = d.f.target;
+      const dir = SUB(B, A);
+      const l = Math.hypot(...dir) || 1;
+      const u = [dir[0] / l, dir[1] / l, dir[2] / l];
+      const up = Math.abs(u[2]) > 0.9 ? [1, 0, 0] : [0, 0, 1];
+      const p1 = unit3(cross3(u, up));
+      const p2 = unit3(cross3(u, p1));
+      const spread = (1.4 + 12 * d.t) * d.amp;
+      const ca = Math.cos(d.angle + time * 0.8), sa = Math.sin(d.angle + time * 0.8);
+      const p3 = [
+        A[0] + dir[0] * d.t + (p1[0] * ca + p2[0] * sa) * spread,
+        A[1] + dir[1] * d.t + (p1[1] * ca + p2[1] * sa) * spread,
+        A[2] + dir[2] * d.t + (p1[2] * ca + p2[2] * sa) * spread,
+      ];
+      const q = proj(p3);
+      const rad = Math.max(0.8, d.size * 2.2);
+      const g = ctx.createRadialGradient(q[0], q[1], 0, q[0], q[1], rad * 2.1);
+      const al = (1 - d.t) * 0.55;
+      g.addColorStop(0, `rgba(255,220,150,${al})`);
+      g.addColorStop(0.3, `rgba(255,196,96,${al * 0.7})`);
+      g.addColorStop(1, "rgba(255,160,50,0)");
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(q[0], q[1], rad * 2.1, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // ---------------- tachometer, pedal and engine audio ----------------
+  let pedalPointer = false;
+  function applyPedal(angle, held = true) {
+    pedalAngle = clamp(angle, 0, PEDAL_MAX);
+    rpm = IDLE_RPM + (1 - pedalAngle / PEDAL_MAX) * (MAX_RPM - IDLE_RPM);
+    if (pedalBlade) pedalBlade.setAttribute("transform", `rotate(${-pedalAngle.toFixed(1)} 9 16)`);
+    if (pedalAngleText) pedalAngleText.textContent = `${Math.round(pedalAngle)}°`;
+    if (pedal) {
+      pedal.setAttribute("aria-valuenow", String(Math.round(pedalAngle)));
+      pedal.setAttribute("aria-valuetext", `${Math.round(pedalAngle)} degrees, ${Math.round(rpm)} rpm`);
+      pedal.classList.toggle("pressed", pedalAngle < PEDAL_MAX - 3);
+    }
+    idleAt = performance.now() + 12000;
+    updateAudio();
+  }
+  function pedalFromEvent(event) {
+    const r = pedal.getBoundingClientRect();
+    const t = clamp((event.clientY - r.top - 6) / Math.max(1, r.height - 12), 0, 1);
+    applyPedal(PEDAL_MAX * (1 - t));
+  }
+  let audioCtx = null, audioSrc = null, audioGain = null, audioReady = false, audioLoading = false;
+  async function ensureAudio() {
+    if (!soundOn) return;
+    if (audioReady) {
+      if (audioCtx && audioCtx.state === "suspended") audioCtx.resume().catch(() => {});
+      return;
+    }
+    if (audioLoading) return;
+    audioLoading = true;
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) throw new Error("Web Audio unavailable");
+      audioCtx = new AC();
+      if (audioCtx.state === "suspended") audioCtx.resume().catch(() => {});
+      const res = await fetch("assets/v8-engine.m4a");
+      if (!res.ok) throw new Error(`audio ${res.status}`);
+      const data = await res.arrayBuffer();
+      const buf = await audioCtx.decodeAudioData(data);
+      audioSrc = audioCtx.createBufferSource();
+      audioSrc.buffer = buf;
+      audioSrc.loop = true;
+      audioGain = audioCtx.createGain();
+      audioGain.gain.value = 0;
+      audioSrc.connect(audioGain);
+      audioGain.connect(audioCtx.destination);
+      audioSrc.start(0);
+      audioReady = true;
+      if (audioCtx.state === "suspended") await audioCtx.resume();
+      updateAudio();
+    } catch (err) {
+      console.warn("V8 engine audio unavailable", err);
+    } finally {
+      audioLoading = false;
+    }
+  }
+  function updateAudio() {
+    if (!audioReady || !audioCtx) return;
+    const t = clamp((rpm - IDLE_RPM) / (MAX_RPM - IDLE_RPM), 0, 1);
+    const now = audioCtx.currentTime;
+    audioSrc.playbackRate.setTargetAtTime(0.55 + t * 1.0, now, 0.08);
+    audioGain.gain.setTargetAtTime(soundOn && playing ? 0.08 + t * 0.62 : 0, now, 0.12);
+    if (audioCtx.state === "suspended" && soundOn && playing) audioCtx.resume().catch(() => {});
+  }
+  if (pedal) {
+    pedal.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      pedalPointer = true;
+      pedal.setPointerCapture(e.pointerId);
+      ensureAudio();
+      pedalFromEvent(e);
+    });
+    pedal.addEventListener("pointermove", (e) => { if (pedalPointer) pedalFromEvent(e); });
+    const release = () => { if (!pedalPointer) return; pedalPointer = false; applyPedal(PEDAL_MAX); };
+    pedal.addEventListener("pointerup", release);
+    pedal.addEventListener("pointercancel", release);
+    window.addEventListener("pointerup", release);
+    window.addEventListener("pointercancel", release);
+    window.addEventListener("blur", release);
+    pedal.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowDown" || e.key === " ") { e.preventDefault(); ensureAudio(); applyPedal(0); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); applyPedal(PEDAL_MAX); }
+    });
+    pedal.addEventListener("keyup", (e) => {
+      if (e.key === "ArrowDown" || e.key === " ") { e.preventDefault(); applyPedal(PEDAL_MAX); }
+    });
+  }
+  if (soundBtn) soundBtn.addEventListener("click", () => {
+    soundOn = !soundOn;
+    soundBtn.setAttribute("aria-pressed", String(soundOn));
+    if (soundOn) ensureAudio();
+    updateAudio();
+    idleAt = performance.now() + 12000;
+  });
+  window.addEventListener("pointerdown", () => { if (soundOn) ensureAudio(); }, { once: true });
+  window.addEventListener("keydown", () => { if (soundOn) ensureAudio(); }, { once: true });
+  applyPedal(PEDAL_MAX);
+
+  let frame = 0;
+  function render(now) {
+    const dt = last ? Math.min((now - last) / 1000, 0.05) : 0.016;
+    last = now;
+    if (playing) theta += rpm * 6 * dt;
+    if (camAnim) {
+      camAnim.t += dt / 0.7;
+      const k = Math.min(1, camAnim.t);
+      const e = k * k * (3 - 2 * k);
+      yaw = camAnim.y0 + (camAnim.y1 - camAnim.y0) * e;
+      pitch = camAnim.p0 + (camAnim.p1 - camAnim.p0) * e;
+      zoom = camAnim.z0 + (camAnim.z1 - camAnim.z0) * e;
+      if (k >= 1) camAnim = null;
+    } else if (!still.matches && !dragging && now > idleAt) yaw += 0.06 * dt;
+    const deg = ((theta % 720) + 720) % 720;
+    const fire = V8.firingCyl(deg);
+    if (playing) updateParticles(dt, deg);
+
+    // background
+    const bg = ctx.createRadialGradient(w / 2, h * 0.42, 40, w / 2, h * 0.42, Math.max(w, h) * 0.7);
+    bg.addColorStop(0, "#151819");
+    bg.addColorStop(1, "#080909");
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, w, h);
+
+    fit();
+    const { draws, edges, dyn } = buildFrame(deg);
+    // ground shadow
+    const sh = proj([0, 0, -160]);
+    const shg = ctx.createRadialGradient(sh[0], sh[1], 10, sh[0], sh[1], 430 * view.s);
+    shg.addColorStop(0, "rgba(0,0,0,0.5)");
+    shg.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.save();
+    ctx.translate(sh[0], sh[1]);
+    ctx.scale(1, 0.34);
+    ctx.fillStyle = shg;
+    ctx.beginPath(); ctx.arc(0, 0, 430 * view.s, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+
+    draws.sort((a, b) => a.depth - b.depth);
+    for (const d of draws) {
+      if (d.gas) { d.draw(ctx); continue; }
+      ctx.beginPath();
+      ctx.moveTo(d.pts[0][0], d.pts[0][1]);
+      for (let i = 1; i < d.pts.length; i++) ctx.lineTo(d.pts[i][0], d.pts[i][1]);
+      ctx.closePath();
+      ctx.fillStyle = d.fill;
+      ctx.fill();
+    }
+    // edges, faint first
+    for (const kind of ["hidden", "crease", "sil"]) {
+      for (const [key, segs] of edges[kind]) {
+        const color = key.split("|")[0];
+        ctx.strokeStyle = color;
+        ctx.lineWidth = kind === "sil" ? 0.9 : 0.55;
+        ctx.beginPath();
+        for (const [x0, y0, x1, y1] of segs) { ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); }
+        ctx.stroke();
+      }
+    }
+    // bores and static wires
+    for (const wv of STATIC.wires) {
+      if (wv.kind === "wireCylinder") drawBoreWire({ o: wv.o, axis: wv.axis, r: wv.r, s0: wv.s0, s1: wv.s1 });
+      else if (wv.kind === "wirePath") {
+        ctx.strokeStyle = `rgba(${wv.color.join(",")},${wv.alpha})`;
+        ctx.lineWidth = wv.width;
+        ctx.beginPath();
+        wv.points.forEach((p, i) => { const q = proj(p); i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); });
+        ctx.stroke();
+      }
+    }
+    for (const wv of dyn.wires) {
+      ctx.strokeStyle = `rgba(${wv.color.join(",")},${wv.alpha})`;
+      ctx.lineWidth = wv.width;
+      ctx.beginPath();
+      wv.points.forEach((p, i) => { const q = proj(p); i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); });
+      ctx.stroke();
+    }
+    // timing chains: link plates and rollers
+    const plates = dyn.chainPlates.map((p) => {
+      let depth = 0;
+      const pts = p.pts.map((q) => { const s = proj(q); depth += s[2]; return s; });
+      return { ...p, pts, depth: depth / pts.length };
+    }).sort((a, b) => a.depth - b.depth);
+    for (const p of plates) {
+      ctx.beginPath();
+      ctx.moveTo(p.pts[0][0], p.pts[0][1]);
+      for (let i = 1; i < p.pts.length; i++) ctx.lineTo(p.pts[i][0], p.pts[i][1]);
+      ctx.closePath();
+      ctx.fillStyle = `rgba(${p.fill.join(",")},${p.alpha})`;
+      ctx.fill();
+      ctx.strokeStyle = `rgba(${p.edge.join(",")},0.35)`;
+      ctx.lineWidth = 0.5;
+      ctx.stroke();
+    }
+    for (const dot of dyn.chainDots) {
+      const q = proj(dot.p);
+      ctx.beginPath();
+      ctx.arc(q[0], q[1], Math.max(1.1, dot.r * view.s), 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${dot.color.join(",")},${dot.alpha})`;
+      ctx.fill();
+    }
+    drawFlows(deg, now);
+    drawFuel(deg, playing ? dt : 0, now);
+    // particles
+    ctx.globalCompositeOperation = "lighter";
+    for (const p of particles) {
+      const q = proj(p.pos);
+      const c = p.type === "intake" ? "64,170,255" : "255,140,45";
+      const g = ctx.createRadialGradient(q[0], q[1], 0, q[0], q[1], p.size * 2.4);
+      g.addColorStop(0, `rgba(${c},${p.alpha})`);
+      g.addColorStop(1, `rgba(${c},0)`);
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(q[0], q[1], p.size * 2.4, 0, Math.PI * 2); ctx.fill();
+    }
+    // ignition: a bright burst over the first degrees of the power stroke
+    for (const cyl of V8.CYL) {
+      const cyc = V8.cycle(cyl, deg);
+      if (cyc > 42) continue;
+      const f = cyc < 6 ? 1 : 1 - (cyc - 6) / 36;
+      const ch = chamber(cyl, deg);
+      const c0 = proj([(ch.p0[0] + ch.p1[0]) / 2, (ch.p0[1] + ch.p1[1]) / 2, (ch.p0[2] + ch.p1[2]) / 2]);
+      const R = (54 + 62 * (1 - f)) * view.s;
+      const g = ctx.createRadialGradient(c0[0], c0[1], 0, c0[0], c0[1], R);
+      g.addColorStop(0, `rgba(255,252,240,${0.95 * f})`);
+      g.addColorStop(0.12, `rgba(255,236,170,${0.9 * f})`);
+      g.addColorStop(0.32, `rgba(255,160,64,${0.7 * f})`);
+      g.addColorStop(0.62, `rgba(255,78,40,${0.36 * f})`);
+      g.addColorStop(1, "rgba(255,60,20,0)");
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(c0[0], c0[1], R, 0, Math.PI * 2); ctx.fill();
+      // a thin expanding shock ring
+      ctx.strokeStyle = `rgba(255,220,160,${0.4 * f})`;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.arc(c0[0], c0[1], R * (0.55 + 0.5 * (1 - f)), 0, Math.PI * 2); ctx.stroke();
+      // the plug's spark at the electrode tip, just off the chamber roof
+      const u = V8.BANK[cyl.bank].ax;
+      const tq = proj([cyl.x, u[1] * 244, u[2] * 244]);
+      const sa = cyc < 9 ? 1 - cyc / 9 : 0;
+      if (sa > 0) {
+        const g2 = ctx.createRadialGradient(tq[0], tq[1], 0, tq[0], tq[1], 9 * view.s);
+        g2.addColorStop(0, `rgba(235,250,255,${0.95 * sa})`);
+        g2.addColorStop(0.38, `rgba(150,215,255,${0.55 * sa})`);
+        g2.addColorStop(1, "rgba(90,170,255,0)");
+        ctx.fillStyle = g2;
+        ctx.beginPath(); ctx.arc(tq[0], tq[1], 9 * view.s, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = `rgba(240,252,255,${0.9 * sa})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(tq[0] - 5, tq[1]); ctx.lineTo(tq[0] + 5, tq[1]);
+        ctx.moveTo(tq[0], tq[1] - 5); ctx.lineTo(tq[0], tq[1] + 5);
+        ctx.stroke();
+      }
+    }
+    ctx.globalCompositeOperation = "source-over";
+
+    // cylinder number pins
+    for (const b of STATIC.bores) {
+      const p = proj(b.top);
+      if (p[0] < -30 || p[0] > w + 30 || p[1] < -30 || p[1] > h + 30) continue;
+      const g = gasState(V8.CYL.find((c) => c.n === b.n), deg);
+      ctx.beginPath(); ctx.arc(p[0], p[1] - 16, 10, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(8,10,14,0.72)";
+      ctx.fill();
+      ctx.strokeStyle = `rgba(${g.color[0]},${g.color[1]},${g.color[2]},0.85)`;
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+      ctx.fillStyle = "rgba(235,242,250,0.95)";
+      ctx.font = "600 10px ui-monospace, SFMono-Regular, Menlo, monospace";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(String(b.n), p[0], p[1] - 15.5);
+      ctx.beginPath(); ctx.moveTo(p[0], p[1] - 6); ctx.lineTo(p[0], p[1] + 1);
+      ctx.strokeStyle = "rgba(200,220,240,0.45)"; ctx.lineWidth = 0.8; ctx.stroke();
+    }
+
+    drawTags(deg);
+
+    // tachometer and engine audio
+    if (dashNeedle) dashNeedle.setAttribute("transform", `rotate(${(-120 + (rpm / MAX_RPM) * 240).toFixed(1)} 80 80)`);
+    if (dashRpm) dashRpm.textContent = String(Math.round(rpm));
+
+    // readout and chips
+    const injecting = STATIC.fuel.some((f) => {
+      const cyc = V8.cycle(V8.CYL.find((c) => c.n === f.n), deg);
+      return cyc > 372 && cyc < 448;
+    });
+    const text = `crank ${Math.round(deg)}° / ${Math.round(rpm)} rpm / #${fire} firing${injecting ? " / petrol" : ""}`;
+    if (readout.textContent !== text) readout.textContent = text;
+    for (const chip of chips) {
+      const n = Number(chip.dataset.chip);
+      const cyl = V8.CYL.find((c) => c.n === n);
+      const g = gasState(cyl, deg);
+      const c = g.color;
+      chip.style.setProperty("--gas", `rgb(${c[0]},${c[1]},${c[2]})`);
+      chip.style.setProperty("--gasA", String(clamp(g.alpha * 2, 0.25, 0.95)));
+      chip.classList.toggle("fire", fire === n);
+    }
+    frame = requestAnimationFrame(render);
+  }
+
+  // ---------------- part name tags (fixed in 3D, billboarded) ----------------
+  // Each plate is centered on a fixed 3D label point. The whole plate turns
+  // with the model; only the far end of its leader tracks a moving part.
+  function drawTags(deg) {
+    const compact = w < 900;
+    const font = `600 ${compact ? 8.5 : 9}px ui-monospace, SFMono-Regular, Menlo, monospace`;
+    const kickFont = `600 ${compact ? 7 : 7.5}px ui-monospace, SFMono-Regular, Menlo, monospace`;
+    const H = compact ? 16 : 18;
+    const HC = compact ? 28 : 30;
+    const tags = tagAnchors(deg).filter((t) => !compact || t.priority === 1);
+    ctx.save();
+    const LC = [-42, 0, 96];
+    const A0 = 28 * DEG, E0 = 23 * DEG;
+    const R0 = [Math.sin(A0), -Math.cos(A0), 0];
+    const U0 = [-Math.cos(A0) * Math.sin(E0), -Math.sin(A0) * Math.sin(E0), Math.cos(E0)];
+    const F0 = [Math.cos(A0) * Math.cos(E0), Math.sin(A0) * Math.cos(E0), Math.sin(E0)];
+    const compactLabel = (p) => {
+      if (!compact) return p;
+      const rel = [p[0] - LC[0], p[1] - LC[1], p[2] - LC[2]];
+      const u = dot(R0, rel), v = dot(U0, rel), d = dot(F0, rel);
+      return [LC[0] + R0[0] * u * 0.5 + U0[0] * v * 1.5 + F0[0] * d * 0.35,
+              LC[1] + R0[1] * u * 0.5 + U0[1] * v * 1.5 + F0[1] * d * 0.35,
+              LC[2] + R0[2] * u * 0.5 + U0[2] * v * 1.5 + F0[2] * d * 0.35];
+    };
+    for (const t of tags) {
+      const lp = compactLabel(t.l);
+      const q = proj(lp);
+      const e = proj(t.p);
+      t.q = q; t.e = e;
+      const card = t.key === "stage1" || t.key === "spray1";
+      t.card = card;
+      t.label = compact && t.short ? t.short : t.text;
+      ctx.font = font;
+      t.lw = card ? (compact ? 116 : 132) : ctx.measureText(t.label).width + 14;
+      t.h = card ? HC : H;
+      // leader starts on the plate edge nearest the part
+      const dx = e[0] - q[0], dy = e[1] - q[1];
+      const adx = Math.abs(dx), ady = Math.abs(dy);
+      const kx = adx > 1e-3 ? (t.lw / 2) / adx : Infinity;
+      const ky = ady > 1e-3 ? (t.h / 2) / ady : Infinity;
+      t.inside = adx < t.lw / 2 && ady < t.h / 2;
+      t.lineStart = [q[0] + dx * Math.min(kx, ky), q[1] + dy * Math.min(kx, ky)];
+    }
+    // leaders and anchor dots
+    for (const t of tags) {
+      if (t.inside) continue;
+      const col = t.color || null;
+      const line = col ? `rgba(${col[0]},${col[1]},${col[2]},0.82)` : "rgba(184,201,217,0.58)";
+      if (col) {
+        ctx.strokeStyle = `rgba(${col[0]},${col[1]},${col[2]},0.12)`;
+        ctx.lineWidth = 4.4;
+        ctx.beginPath(); ctx.moveTo(t.lineStart[0], t.lineStart[1]); ctx.lineTo(t.e[0], t.e[1]); ctx.stroke();
+      }
+      ctx.strokeStyle = "rgba(5,7,10,0.62)"; ctx.lineWidth = 2.6;
+      ctx.beginPath(); ctx.moveTo(t.lineStart[0], t.lineStart[1]); ctx.lineTo(t.e[0], t.e[1]); ctx.stroke();
+      ctx.strokeStyle = line; ctx.lineWidth = 0.9;
+      ctx.beginPath(); ctx.moveTo(t.lineStart[0], t.lineStart[1]); ctx.lineTo(t.e[0], t.e[1]); ctx.stroke();
+      ctx.beginPath(); ctx.arc(t.e[0], t.e[1], 4.6, 0, Math.PI * 2);
+      ctx.strokeStyle = col ? `rgba(${col[0]},${col[1]},${col[2]},0.4)` : "rgba(210,226,240,0.3)";
+      ctx.lineWidth = 0.8; ctx.stroke();
+      ctx.beginPath(); ctx.arc(t.e[0], t.e[1], 2.2, 0, Math.PI * 2);
+      ctx.fillStyle = col ? `rgba(${col[0]},${col[1]},${col[2]},0.98)` : "rgba(232,241,250,0.95)";
+      ctx.fill();
+    }
+    // plates, centered on their 3D points; cards last so they stay legible
+    const ordered = [...tags.filter((t) => !t.card), ...tags.filter((t) => t.card)];
+    for (const t of ordered) {
+      const x = t.q[0] - t.lw / 2, y = t.q[1] - t.h / 2;
+      if (t.card) {
+        const col = t.color || [160, 174, 188];
+        ctx.beginPath(); ctx.roundRect(x, y, t.lw, t.h, 4);
+        ctx.fillStyle = "rgba(8,11,16,0.92)"; ctx.fill();
+        ctx.strokeStyle = `rgba(${col[0]},${col[1]},${col[2]},0.52)`;
+        ctx.lineWidth = 0.9; ctx.stroke();
+        const barX = t.e[0] < t.q[0] ? x : x + t.lw - 2.2;
+        ctx.fillStyle = `rgba(${col[0]},${col[1]},${col[2]},0.9)`;
+        ctx.fillRect(barX, y + 5, 2.2, t.h - 10);
+        ctx.textAlign = "left"; ctx.textBaseline = "middle";
+        ctx.font = kickFont;
+        ctx.fillStyle = "rgba(158,173,188,0.9)";
+        ctx.fillText(t.kicker || "", x + 9, y + t.h * 0.33);
+        ctx.font = font;
+        ctx.fillStyle = t.on === false ? "rgba(170,184,198,0.9)" : `rgba(${col[0]},${col[1]},${col[2]},0.98)`;
+        ctx.fillText(t.label, x + 9, y + t.h * 0.7);
+      } else {
+        ctx.beginPath(); ctx.roundRect(x, y, t.lw, t.h, 3);
+        ctx.fillStyle = "rgba(8,11,16,0.9)"; ctx.fill();
+        ctx.strokeStyle = "rgba(152,172,192,0.32)"; ctx.lineWidth = 0.8; ctx.stroke();
+        ctx.font = font; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillStyle = "rgba(215,228,240,0.95)";
+        ctx.fillText(t.label, t.q[0], t.q[1] + 0.5);
+      }
+    }
+    ctx.restore();
+  }
+
+  // ---------------- particles ----------------
+  const spawn = new Map();
+  function updateParticles(dt, deg) {
+    for (const p of particles) {
+      p.t += dt * p.speed;
+      p.alpha = p.life * (1 - Math.max(0, p.t - 0.75) * 3);
+      const seg = Math.min(1, p.t);
+      const path = p.path;
+      const at = seg * (path.length - 1);
+      const i = Math.min(path.length - 2, Math.floor(at));
+      const f = at - i;
+      p.pos = [0, 1, 2].map((k) => path[i][k] + (path[i + 1][k] - path[i][k]) * f);
+    }
+    for (let i = particles.length - 1; i >= 0; i--) if (particles[i].t >= 1 || particles[i].alpha <= 0) particles.splice(i, 1);
+    for (const fl of FLOWS) {
+      const cyl = V8.CYL.find((c) => c.n === fl.cyl);
+      const active = fl.type === "intake" ? V8.liftAt(cyl, "intake", deg) : V8.liftAt(cyl, "exhaust", deg);
+      if (active < 0.4) continue;
+      const key = `${fl.cyl}-${fl.type}`;
+      const t = (spawn.get(key) ?? 0) + dt;
+      const rate = 0.045;
+      if (t > rate) {
+        spawn.set(key, 0);
+        if (particles.length < 260) particles.push({ path: fl.points, t: 0, speed: 0.7 + rpm / 260, size: fl.type === "intake" ? 2.1 : 2.6, type: fl.type, life: fl.type === "intake" ? 0.55 : 0.7, alpha: 0.5, pos: fl.points[0] });
+      } else spawn.set(key, t);
+    }
+  }
+
+  // ---------------- interaction ----------------
+  let dragging = false, lastX = 0, lastY = 0, moved = 0;
+  setPointer(canvas);
+  function setPointer(el) {
+    el.addEventListener("pointerdown", (e) => {
+      dragging = true; lastX = e.clientX; lastY = e.clientY; moved = 0;
+      el.setPointerCapture(e.pointerId);
+      el.classList.add("dragging");
+    });
+    el.addEventListener("pointermove", (e) => {
+      if (!dragging) return;
+      camAnim = null;
+      const dx = e.clientX - lastX, dy = e.clientY - lastY;
+      lastX = e.clientX; lastY = e.clientY; moved += Math.abs(dx) + Math.abs(dy);
+      yaw += dx * 0.006;
+      pitch = clamp(pitch + dy * 0.005, -85 * DEG, 85 * DEG);
+      idleAt = performance.now() + 12000;
+    });
+    const end = () => { dragging = false; el.classList.remove("dragging"); };
+    el.addEventListener("pointerup", end);
+    el.addEventListener("pointercancel", end);
+    el.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      zoom = clamp(zoom * Math.exp(-e.deltaY * 0.0012), 0.55, 2.4);
+      idleAt = performance.now() + 12000;
+    }, { passive: false });
+    el.addEventListener("dblclick", () => { yaw = 28 * DEG; pitch = 23 * DEG; zoom = 1; });
+  }
+  playBtn.addEventListener("click", () => {
+    playing = !playing;
+    syncPlay();
+    last = 0;
+    updateAudio();
+  });
+  if (still.matches) { playing = false; syncPlay(); }
+
+  // ---------------- size ----------------
+  function resize() {
+    const r = stage.getBoundingClientRect();
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    w = Math.max(320, Math.round(r.width));
+    h = Math.max(260, Math.round(r.height));
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+    canvas.style.width = w + "px";
+    canvas.style.height = h + "px";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    fit();
+  }
+  new ResizeObserver(resize).observe(stage);
+  resize();
+
+  window.__v8x = {
+    setTheta(v) { theta = v; last = 0; },
+    setPose(a, e, z = 1) { camAnim = null; yaw = a * DEG; pitch = e * DEG; zoom = z; },
+    view(name) { goTo(name); },
+    setRpm(v) { const r = clamp(Number(v) || IDLE_RPM, IDLE_RPM, MAX_RPM); applyPedal((1 - (r - IDLE_RPM) / (MAX_RPM - IDLE_RPM)) * PEDAL_MAX); },
+    state() { return { theta: ((theta % 720) + 720) % 720, rpm, pedal: pedalAngle, yaw: yaw / DEG, pitch: pitch / DEG, playing, soundOn, particles: particles.length, audio: audioReady ? { ready: true, context: audioCtx.state, rate: +audioSrc.playbackRate.value.toFixed(3), gain: +audioGain.gain.value.toFixed(3), seconds: +audioSrc.buffer.duration.toFixed(2) } : { ready: false, loading: audioLoading, context: audioCtx ? audioCtx.state : "none" } }; },
+    pause() { playing = false; syncPlay(); },
+    play() { playing = true; syncPlay(); },
+  };
+
+  frame = requestAnimationFrame(render);
+})();
+
+</script></body></html>
